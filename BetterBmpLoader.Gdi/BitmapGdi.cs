@@ -78,8 +78,8 @@ namespace BetterBmpLoader.Gdi
         }
         public unsafe static Bitmap Read(byte* data, int dataLength, CalibrationOptions colorOptions, ParserFlags pFlags)
         {
-            BITMAP_DETAILS info;
-            BitmapCore.GetInfo(data, dataLength, out info);
+            BITMAP_READ_DETAILS info;
+            BitmapCore.ReadHeader(data, dataLength, out info);
 
             // we do this parsing here since BitmapCore has no references to System.Drawing
             if (info.compression == BitmapCompressionMode.BI_PNG)
@@ -106,7 +106,7 @@ namespace BetterBmpLoader.Gdi
 
             try
             {
-                lcms.TransformBGRA8(ref info, data, buf, dlock.Stride);
+                Lcms.TransformBGRA8(ref info, data, buf, dlock.Stride);
             }
             catch
             {

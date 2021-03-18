@@ -47,6 +47,12 @@
     <Compile Include="..\BetterBmpLoader.Wpf\BitmapCore.cs">
       <Link>BitmapCore.cs</Link>
     </Compile>
+    <Compile Include="..\BetterBmpLoader.Wpf\Lcms.cs">
+      <Link>Lcms.cs</Link>
+    </Compile>
+    <Compile Include="..\BetterBmpLoader.Wpf\Structs.cs">
+      <Link>Structs.cs</Link>
+    </Compile>
     <Compile Include="BitmapGdi.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

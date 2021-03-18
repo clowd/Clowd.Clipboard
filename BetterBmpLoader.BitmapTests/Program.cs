@@ -28,13 +28,13 @@ namespace BetterBmpLoader.BitmapTests
             foreach (var file in Directory.EnumerateFiles("bitmaps", "*.bmp", SearchOption.TopDirectoryOnly).OrderBy(k => k))
             {
                 //if (!file.Contains("rgb32-7187"))
-                //if (!file.Contains("rgb32h52"))
+                //if (!file.Contains("rgb24png"))
                 //    continue;
 
                 var name = Path.GetFileNameWithoutExtension(file);
                 var bmpPath = Path.Combine("output", name + ".bmp");
                 var pngPath = Path.Combine("output", name + ".png");
-                var pngGdiPath = Path.Combine("output", name + "_gdi.png");
+                var pngGdiPath = Path.Combine("output", name + "_gdi.bmp");
 
                 string error = "Success";
 
@@ -43,8 +43,10 @@ namespace BetterBmpLoader.BitmapTests
                     File.Copy(file, bmpPath);
                     var data = File.ReadAllBytes(file);
 
+                    Console.WriteLine(name);
+
                     // WPF
-                    BitmapSource bmp = BitmapWpf.Read(data, Wpf.CalibrationOptions.TryBestEffort, Wpf.ParserFlags.PreserveInvalidAlphaChannel);
+                    var bmp = BitmapWpf.Read(data, Wpf.CalibrationOptions.PreserveColorProfile, Wpf.ParserFlags.PreserveInvalidAlphaChannel);
                     PngBitmapEncoder enc = new PngBitmapEncoder();
                     enc.Frames.Add(bmp as BitmapFrame ?? BitmapFrame.Create(bmp));
                     var ms = new MemoryStream();
@@ -52,8 +54,12 @@ namespace BetterBmpLoader.BitmapTests
                     File.WriteAllBytes(pngPath, ms.GetBuffer());
 
                     // GDI
-                    var bmp2 = BitmapGdi.Read(data, Gdi.CalibrationOptions.TryBestEffort, Gdi.ParserFlags.PreserveInvalidAlphaChannel);
-                    bmp2.Save(pngGdiPath, ImageFormat.Png);
+
+                    File.WriteAllBytes(pngGdiPath, BitmapWpf.GetBytes(bmp));
+
+                    //var bmp2 = BitmapGdi.Read(data, Gdi.CalibrationOptions.TryBestEffort, Gdi.ParserFlags.PreserveInvalidAlphaChannel);
+                    //bmp2.Save(pngGdiPath, ImageFormat.Png);
+                    Console.WriteLine();
                 }
                 catch (Exception ex)
                 {
@@ -65,8 +71,8 @@ namespace BetterBmpLoader.BitmapTests
 
 
             File.AppendAllText("render.html", "</table></body></html>");
-            //Console.Read();
             Process.Start("render.html");
+            Console.Read();
         }
     }
 }

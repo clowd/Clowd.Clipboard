@@ -66,31 +66,18 @@ namespace BetterBmpLoader.Wpf
         private const int WINCODEC_SDK_VERSION = 0x0236;
 
         public static BitmapFrame Read(Stream stream) => Read(stream, CalibrationOptions.Ignore);
+
         public static BitmapFrame Read(Stream stream, CalibrationOptions colorOptions) => Read(stream, colorOptions, ParserFlags.None);
+
         public static BitmapFrame Read(Stream stream, CalibrationOptions colorOptions, ParserFlags pFlags)
         {
-            if (stream is MemoryStream mem)
-            {
-                return Read(mem.GetBuffer(), colorOptions, pFlags);
-            }
-            else
-            {
-                byte[] buffer = new byte[4096];
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    while (true)
-                    {
-                        int read = stream.Read(buffer, 0, buffer.Length);
-                        if (read <= 0)
-                            return Read(ms.GetBuffer(), colorOptions, pFlags);
-                        ms.Write(buffer, 0, read);
-                    }
-                }
-            }
+            return Read(StructUtil.ReadBytes(stream), colorOptions, pFlags);
         }
 
         public static BitmapFrame Read(byte[] data) => Read(data, CalibrationOptions.Ignore);
+
         public static BitmapFrame Read(byte[] data, CalibrationOptions colorOptions) => Read(data, colorOptions, ParserFlags.None);
+
         public unsafe static BitmapFrame Read(byte[] data, CalibrationOptions colorOptions, ParserFlags pFlags)
         {
             fixed (byte* ptr = data)
@@ -99,9 +86,9 @@ namespace BetterBmpLoader.Wpf
 
         public unsafe static BitmapFrame Read(byte* data, int dataLength, CalibrationOptions colorOptions, ParserFlags pFlags)
         {
-            BITMAP_DETAILS info;
+            BITMAP_READ_DETAILS info;
 
-            BitmapCore.GetInfo(data, dataLength, out info);
+            BitmapCore.ReadHeader(data, dataLength, out info);
 
             // we do this parsing here since BitmapCore has no references to PresentationCore
             if (info.compression == BitmapCompressionMode.BI_PNG)
@@ -119,33 +106,61 @@ namespace BetterBmpLoader.Wpf
                 return jpg.Frames[0];
             }
 
+            BitmapPalette palette = null;
+
+            if (info.imgColorTable.Length > 0)
+            {
+                var clrs = info.imgColorTable.Select(c => System.Windows.Media.Color.FromRgb(c.rgbRed, c.rgbGreen, c.rgbBlue));
+                if (info.imgColorTable.Length > 256)
+                    clrs = clrs.Take(256);
+                palette = new BitmapPalette(clrs.ToList());
+            }
+
+            // defaults
+            System.Windows.Media.PixelFormat wpfFmt = System.Windows.Media.PixelFormats.Bgra32;
+            BitmapCorePixelFormat2 coreFmt = BitmapCorePixelFormat2.Bgra32;
+
+            if (info.imgFmt != null)
+            {
+                var pxarr = Formats.Where(m => m.coreFmt == info.imgFmt).ToArray();
+                if (pxarr.Length > 0)
+                {
+                    if (pxarr.Length == 0)
+                        throw new NotSupportedException("Pixel format not supported.");
+                    var px = pxarr.First();
+                    wpfFmt = px.wpfFmt;
+                    coreFmt = px.coreFmt;
+                }
+            }
+
             var bitmap = new WriteableBitmap(
                 info.imgWidth,
                 info.imgHeight,
                 info.dpiX,
                 info.dpiY,
-                System.Windows.Media.PixelFormats.Bgra32,
-                BitmapPalettes.Halftone256Transparent);
+                wpfFmt,
+                palette);
 
             var buf = (byte*)bitmap.BackBuffer;
 
             bitmap.Lock();
             var preserveAlpha = (pFlags & ParserFlags.PreserveInvalidAlphaChannel) > 0;
-            BitmapCore.ReadPixelsToBGRA8(ref info, (data + info.imgDataOffset), buf, preserveAlpha);
+
+            BitmapCore.ReadPixels(ref info, coreFmt, (data + info.imgDataOffset), buf, preserveAlpha);
 
             bool transformed = false;
 
             if (colorOptions == CalibrationOptions.FlattenTo_sRGB)
             {
                 // ColorConvertedBitmap fallback ?
-                lcms.TransformBGRA8(ref info, data, buf, bitmap.BackBufferStride);
+                Lcms.TransformBGRA8(ref info, data, buf, bitmap.BackBufferStride);
                 transformed = true;
             }
             else if (colorOptions == CalibrationOptions.TryBestEffort)
             {
                 try
                 {
-                    lcms.TransformBGRA8(ref info, data, buf, bitmap.BackBufferStride);
+                    Lcms.TransformBGRA8(ref info, data, buf, bitmap.BackBufferStride);
                     transformed = true;
                 }
                 catch
@@ -177,6 +192,61 @@ namespace BetterBmpLoader.Wpf
             }
 
             return BitmapFrame.Create(bitmap);
+        }
+
+        private static PxMap[] Formats = new PxMap[]
+        {
+            //new PxMap(System.Windows.Media.PixelFormats.Bgra32, BitmapCorePixelFormat2.Bgr5551, BitmapCorePixelFormat2.Bgra32),
+            new PxMap(System.Windows.Media.PixelFormats.Bgra32, BitmapCorePixelFormat2.Bgra32),
+            new PxMap(System.Windows.Media.PixelFormats.Rgb24, BitmapCorePixelFormat2.Rgb24),
+            new PxMap(System.Windows.Media.PixelFormats.Bgr24, BitmapCorePixelFormat2.Bgr24),
+            new PxMap(System.Windows.Media.PixelFormats.Bgr555, BitmapCorePixelFormat2.Bgr555X1),
+            new PxMap(System.Windows.Media.PixelFormats.Bgr565, BitmapCorePixelFormat2.Bgr565),
+            new PxMap(System.Windows.Media.PixelFormats.Indexed8, BitmapCorePixelFormat2.Indexed8),
+            new PxMap(System.Windows.Media.PixelFormats.Indexed4, BitmapCorePixelFormat2.Indexed4),
+            new PxMap(System.Windows.Media.PixelFormats.Indexed2, BitmapCorePixelFormat2.Indexed2),
+            new PxMap(System.Windows.Media.PixelFormats.Indexed1, BitmapCorePixelFormat2.Indexed1),
+
+            // this is at the end so it will never be used when parsing, only when writing
+            new PxMap(System.Windows.Media.PixelFormats.Bgr32, BitmapCorePixelFormat2.Bgra32),
+        };
+
+        public static unsafe byte[] GetBytes(BitmapFrame bitmap)
+        {
+            var pxarr = Formats.Where(m => m.wpfFmt == bitmap.Format).ToArray();
+            if (pxarr.Length == 0)
+                throw new NotSupportedException($"Pixel format '{bitmap.Format.ToString()}' not supported.");
+
+            var px = pxarr.First();
+            int stride = (px.coreFmt.BitsPerPixel * bitmap.PixelWidth + 31) / 32 * 4;
+
+            byte[] buffer = new byte[stride * bitmap.PixelHeight];
+            bitmap.CopyPixels(buffer, stride, 0);
+
+            var clrs = bitmap.Palette == null ? null : bitmap.Palette.Colors.Select(c => new RGBQUAD { rgbRed = c.R, rgbBlue = c.B, rgbGreen = c.G }).ToArray();
+
+            BITMAP_WRITE_REQUEST req = new BITMAP_WRITE_REQUEST
+            {
+                dpiX = bitmap.DpiX,
+                dpiY = bitmap.DpiY,
+                imgWidth = bitmap.PixelWidth,
+                imgHeight = bitmap.PixelHeight,
+                imgStride = (uint)stride,
+                imgTopDown = true,
+                imgColorTable = clrs,
+                fmt = px.coreFmt,
+            };
+
+            byte[] ctxBytes = null;
+
+            if (bitmap.ColorContexts != null && bitmap.ColorContexts.Any())
+            {
+                var ctx = bitmap.ColorContexts.First();
+                ctxBytes = StructUtil.ReadBytes(ctx.OpenProfileStream());
+            }
+
+            fixed (byte* ptr = buffer)
+                return BitmapCore.WriteToBMP(ref req, true, ptr, ctxBytes, true);
         }
 
         private unsafe static System.Windows.Media.ColorContext GetWpfColorContext(void* profilePtr, uint profileSize)
@@ -214,6 +284,18 @@ namespace BetterBmpLoader.Wpf
             finally
             {
                 Marshal.Release(factoryPtr);
+            }
+        }
+
+        private struct PxMap
+        {
+            public System.Windows.Media.PixelFormat wpfFmt;
+            public BitmapCorePixelFormat2 coreFmt;
+
+            public PxMap(System.Windows.Media.PixelFormat wpf, BitmapCorePixelFormat2 core)
+            {
+                wpfFmt = wpf;
+                coreFmt = core;
             }
         }
     }
