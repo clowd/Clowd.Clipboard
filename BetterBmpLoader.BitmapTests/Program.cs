@@ -28,8 +28,8 @@ namespace BetterBmpLoader.BitmapTests
             foreach (var file in Directory.EnumerateFiles("bitmaps", "*.bmp", SearchOption.TopDirectoryOnly).OrderBy(k => k))
             {
                 //if (!file.Contains("rgb32-7187"))
-                if (!file.Contains("huff"))
-                    continue;
+                //if (!file.Contains("huff"))
+                //    continue;
 
                 var name = Path.GetFileNameWithoutExtension(file);
                 var bmpPath = Path.Combine("output", name + ".bmp");

@@ -46,7 +46,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BitmapCore.cs" />
-    <Compile Include="BitmapCore_Huffman.cs" />
     <Compile Include="BitmapWpf.cs" />
     <Compile Include="BitmapWpfInternal.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
