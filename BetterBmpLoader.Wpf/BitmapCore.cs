@@ -19,7 +19,7 @@ namespace BetterBmpLoader
         private const string
             ERR_HEOF = "Bitmap stream ended while parsing header, but more data was expected. This usually indicates an malformed file or empty data stream.";
 
-        private static int calc_shift(uint mask)
+        private static int CalculateBitShift(uint mask)
         {
             for (int shift = 0; shift < sizeof(uint) * 8; ++shift)
             {
@@ -214,6 +214,12 @@ namespace BetterBmpLoader
             switch (bi.bV5Compression)
             {
                 case BitmapCompressionMode.BI_BITFIELDS:
+
+
+                    if (header_size >= 52)
+                        break;
+
+
                     // seems that v5 bitmaps sometimes do not have a color table, even if BI_BITFIELDS is set
                     // we read/skip them here anyways, if we have a file header we can correct the offset later
                     // whether or not these follow the header depends entirely on the application that created the bitmap..
@@ -251,6 +257,10 @@ namespace BetterBmpLoader
                     // }
                     break;
                 case BitmapCompressionMode.BI_ALPHABITFIELDS:
+
+                    if (header_size >= 56)
+                        break;
+
                     var btfiaSize = (sizeof(uint) * 4);
                     if (offset + btfiaSize > sourceLength)
                         throw new InvalidOperationException(ERR_HEOF);
@@ -404,7 +414,8 @@ namespace BetterBmpLoader
 
             // currently we only support RLE -> Bgra32
             if (bi.bV5Compression == BitmapCompressionMode.BI_RLE4 || bi.bV5Compression == BitmapCompressionMode.BI_RLE8 || bi.bV5Compression == BitmapCompressionMode.OS2_RLE24)
-                fmt = BitmapCorePixelFormat2.Bgra32;
+                fmt = null;
+            //     fmt = BitmapCorePixelFormat2.Bgra32;
 
             double pixelPerMeterToDpi(int pels)
             {
@@ -512,28 +523,28 @@ namespace BetterBmpLoader
 
             if (maskR != 0)
             {
-                shiftR = calc_shift(maskR);
+                shiftR = CalculateBitShift(maskR);
                 maxR = maskR >> shiftR;
                 multR = (uint)(Math.Ceiling(255d / maxR * 65536 * 256)); // bitshift << 24
             }
 
             if (maskG != 0)
             {
-                shiftG = calc_shift(maskG);
+                shiftG = CalculateBitShift(maskG);
                 maxG = maskG >> shiftG;
                 multG = (uint)(Math.Ceiling(255d / maxG * 65536 * 256));
             }
 
             if (maskB != 0)
             {
-                shiftB = calc_shift(maskB);
+                shiftB = CalculateBitShift(maskB);
                 maxB = maskB >> shiftB;
                 multB = (uint)(Math.Ceiling(255d / maxB * 65536 * 256));
             }
 
             if (maskA != 0)
             {
-                shiftA = calc_shift(maskA);
+                shiftA = CalculateBitShift(maskA);
                 maxA = maskA >> shiftA;
                 multA = (uint)(Math.Ceiling(255d / maxA * 65536 * 256)); // bitshift << 24
             }
@@ -1586,7 +1597,7 @@ namespace BetterBmpLoader
             BitsPerPixel = 8,
         };
 
-        public static readonly BitmapCorePixelFormat2 Bgr555X1 = new BitmapCorePixelFormat2
+        public static readonly BitmapCorePixelFormat2 Bgr555X = new BitmapCorePixelFormat2
         {
             BitsPerPixel = 16,
             Masks = BitFields.BITFIELDS_BGRA_555X,
@@ -1699,7 +1710,7 @@ namespace BetterBmpLoader
             Indexed2,
             Indexed4,
             Indexed8,
-            Bgr555X1,
+            Bgr555X,
             Bgr5551,
             Bgr565,
             Rgb24,

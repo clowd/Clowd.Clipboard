@@ -49,15 +49,23 @@ namespace BetterBmpLoader.Wpf
         /// transparency data, and if so, parse it as such.
         /// </summary>
         PreserveInvalidAlphaChannel = 1,
+
+        /// <summary>
+        /// Will cause an exeption if the original pixel format can not be preserved. This could be the case if either WPF or BitmapCore does not 
+        /// support this format natively.
+        /// </summary>
+        StrictPreserveOriginalFormat = 2,
+
+        /// <summary>
+        /// Will force the bitmap pixel data to be converted to BGRA32 no matter what the source format is. Not valid if combined with <see cref="StrictPreserveOriginalFormat"/>.
+        /// </summary>
+        ConvertToBGRA32 = 4
     }
 
     [Flags]
     public enum BitmapWpfWriterFlags
     {
         None = 0,
-        /// <summary>
-        /// The resulting bitmap bytes will be 
-        /// </summary>
         ForceV5Header = 1,
         ForceInfoHeader = 2,
         OmitFileHeader = 4,
@@ -107,8 +115,13 @@ namespace BetterBmpLoader.Wpf
             BITMAP_READ_DETAILS info;
             BitmapCore.ReadHeader(data, dataLength, out info);
             var preserveAlpha = (pFlags & BitmapWpfParserFlags.PreserveInvalidAlphaChannel) > 0;
+            var preserveFormat = (pFlags & BitmapWpfParserFlags.StrictPreserveOriginalFormat) > 0;
+            var bgra32 = (pFlags & BitmapWpfParserFlags.ConvertToBGRA32) > 0;
 
-            return BitmapWpfInternal.Read(ref info, data, dataLength, preserveAlpha);
+            if (preserveFormat && bgra32)
+                throw new ArgumentException("Both ConvertToBGRA32 and StrictPreserveOriginalFormat options were set. These are incompatible options.");
+
+            return BitmapWpfInternal.Read(ref info, data, dataLength, preserveAlpha, preserveFormat, bgra32);
         }
 
         public static unsafe byte[] GetBytes(BitmapFrame bitmap) => GetBytes(bitmap, BitmapWpfWriterFlags.None);

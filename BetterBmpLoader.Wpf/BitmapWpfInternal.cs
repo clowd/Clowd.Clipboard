@@ -7,24 +7,25 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Media.Imaging;
 
-namespace BetterBmpLoader.Wpf
+namespace BetterBmpLoader
 {
     // this class exists separately so it can be included as a submodule/file in ClipboardGapWpf and not create conflicts upstream - rather than including as a project.
     internal class BitmapWpfInternal
     {
-        internal unsafe static BitmapFrame Read(ref BITMAP_READ_DETAILS info, byte* data, int dataLength, bool preserveAlpha)
+        public unsafe static BitmapFrame Read(ref BITMAP_READ_DETAILS info, byte* data, int dataLength, bool preserveAlpha, bool strictPreserveFormat, bool forceBgra32)
         {
+            byte* pixels = data + info.imgDataOffset;
+
             // we do this parsing here since BitmapCore has no references to PresentationCore
-            var size = info.imgDataSize != 0 ? info.imgDataSize : (uint)dataLength;
             if (info.compression == BitmapCompressionMode.BI_PNG)
             {
-                var stream = new PointerStream(data, size);
+                var stream = new PointerStream(pixels, info.imgDataSize);
                 var png = new PngBitmapDecoder(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
                 return png.Frames[0];
             }
             else if (info.compression == BitmapCompressionMode.BI_JPEG)
             {
-                var stream = new PointerStream(data, size);
+                var stream = new PointerStream(pixels, info.imgDataSize);
                 var jpg = new JpegBitmapDecoder(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
                 return jpg.Frames[0];
             }
@@ -42,17 +43,25 @@ namespace BetterBmpLoader.Wpf
             System.Windows.Media.PixelFormat wpfFmt = System.Windows.Media.PixelFormats.Bgra32;
             BitmapCorePixelFormat2 coreFmt = BitmapCorePixelFormat2.Bgra32;
 
-            var origFmt = info.imgFmt;
-            if (origFmt != null)
+            bool sourceMatch = false;
+            if (!forceBgra32)
             {
-                var pxarr = Formats.Where(m => m.coreFmt == origFmt).ToArray();
-                if (pxarr.Length > 0)
+                var origFmt = info.imgFmt;
+                if (origFmt != null)
                 {
-                    var px = pxarr.First();
-                    wpfFmt = px.wpfFmt;
-                    coreFmt = px.coreFmt;
+                    var pxarr = Formats.Where(m => m.coreFmt == origFmt).ToArray();
+                    if (pxarr.Length > 0)
+                    {
+                        var px = pxarr.First();
+                        wpfFmt = px.wpfFmt;
+                        coreFmt = px.coreFmt;
+                        sourceMatch = true;
+                    }
                 }
             }
+
+            if (!sourceMatch && strictPreserveFormat)
+                throw new NotSupportedException("The pixel format of this bitmap is not supported, and StrictPreserveOriginalFormat is set.");
 
             var bitmap = new WriteableBitmap(
                 info.imgWidth,
@@ -66,7 +75,7 @@ namespace BetterBmpLoader.Wpf
 
             bitmap.Lock();
 
-            BitmapCore.ReadPixels(ref info, coreFmt, (data + info.imgDataOffset), buf, preserveAlpha);
+            BitmapCore.ReadPixels(ref info, coreFmt, pixels, buf, preserveAlpha);
 
 #if EXPERIMENTAL_CMM
             bool transformed = false;
@@ -118,13 +127,25 @@ namespace BetterBmpLoader.Wpf
             return BitmapFrame.Create(bitmap);
         }
 
+        private struct PxMap
+        {
+            public System.Windows.Media.PixelFormat wpfFmt;
+            public BitmapCorePixelFormat2 coreFmt;
+
+            public PxMap(System.Windows.Media.PixelFormat wpf, BitmapCorePixelFormat2 core)
+            {
+                wpfFmt = wpf;
+                coreFmt = core;
+            }
+        }
+
         private static PxMap[] Formats = new PxMap[]
         {
             //new PxMap(System.Windows.Media.PixelFormats.Bgra32, BitmapCorePixelFormat2.Bgr5551, BitmapCorePixelFormat2.Bgra32),
             new PxMap(System.Windows.Media.PixelFormats.Bgra32, BitmapCorePixelFormat2.Bgra32),
             new PxMap(System.Windows.Media.PixelFormats.Rgb24, BitmapCorePixelFormat2.Rgb24),
             new PxMap(System.Windows.Media.PixelFormats.Bgr24, BitmapCorePixelFormat2.Bgr24),
-            new PxMap(System.Windows.Media.PixelFormats.Bgr555, BitmapCorePixelFormat2.Bgr555X1),
+            new PxMap(System.Windows.Media.PixelFormats.Bgr555, BitmapCorePixelFormat2.Bgr555X),
             new PxMap(System.Windows.Media.PixelFormats.Bgr565, BitmapCorePixelFormat2.Bgr565),
             new PxMap(System.Windows.Media.PixelFormats.Indexed8, BitmapCorePixelFormat2.Indexed8),
             new PxMap(System.Windows.Media.PixelFormats.Indexed4, BitmapCorePixelFormat2.Indexed4),
@@ -215,19 +236,6 @@ namespace BetterBmpLoader.Wpf
             fixed (byte* ptr = buffer)
                 return BitmapCore.WriteToBMP(ref req, true, ptr, ctxBytes, true);
 #endif
-        }
-
-
-        private struct PxMap
-        {
-            public System.Windows.Media.PixelFormat wpfFmt;
-            public BitmapCorePixelFormat2 coreFmt;
-
-            public PxMap(System.Windows.Media.PixelFormat wpf, BitmapCorePixelFormat2 core)
-            {
-                wpfFmt = wpf;
-                coreFmt = core;
-            }
         }
 
         private class BitmapWpfColorManagement

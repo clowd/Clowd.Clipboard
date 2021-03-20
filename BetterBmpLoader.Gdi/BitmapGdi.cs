@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -32,7 +34,7 @@ namespace BetterBmpLoader.Gdi
 #endif
 
     [Flags]
-    public enum ParserFlags
+    public enum BitmapGdiParserFlags
     {
         /// <summary>
         /// No special parsing flags
@@ -45,24 +47,42 @@ namespace BetterBmpLoader.Gdi
         /// heuristics to determine if that unused channel contains transparency data, and if so, parse it as such.
         /// </summary>
         PreserveInvalidAlphaChannel = 1,
+
+        /// <summary>
+        /// Will cause an exeption if the original pixel format can not be preserved. This could be the case if either System.Drawing or BitmapCore does not 
+        /// support this format natively.
+        /// </summary>
+        StrictPreserveOriginalFormat = 2,
+
+        /// <summary>
+        /// Will force the bitmap pixel data to be converted to BGRA32 no matter what the source format is. Not valid if combined with <see cref="StrictPreserveOriginalFormat"/>.
+        /// </summary>
+        ConvertToBGRA32 = 4
     }
 
     public class BitmapGdi
     {
         public static Bitmap Read(Stream stream) => Read(StructUtil.ReadBytes(stream));
 
-        public static Bitmap Read(Stream stream, ParserFlags pFlags) => Read(StructUtil.ReadBytes(stream), pFlags);
+        public static Bitmap Read(Stream stream, BitmapGdiParserFlags pFlags) => Read(StructUtil.ReadBytes(stream), pFlags);
 
-        public static Bitmap Read(byte[] data) => Read(data, ParserFlags.None);
+        public static Bitmap Read(byte[] data) => Read(data, BitmapGdiParserFlags.None);
 
-        public unsafe static Bitmap Read(byte[] data, ParserFlags pFlags)
+        public unsafe static Bitmap Read(byte[] data, BitmapGdiParserFlags pFlags)
         {
             fixed (byte* ptr = data)
                 return Read(ptr, data.Length, pFlags);
         }
 
-        public unsafe static Bitmap Read(byte* data, int dataLength, ParserFlags pFlags)
+        public unsafe static Bitmap Read(byte* data, int dataLength, BitmapGdiParserFlags pFlags)
         {
+            var preserveAlpha = (pFlags & BitmapGdiParserFlags.PreserveInvalidAlphaChannel) > 0;
+            var strictFormat = (pFlags & BitmapGdiParserFlags.StrictPreserveOriginalFormat) > 0;
+            var formatbgra32 = (pFlags & BitmapGdiParserFlags.ConvertToBGRA32) > 0;
+
+            if (strictFormat && formatbgra32)
+                throw new ArgumentException("Both ConvertToBGRA32 and StrictPreserveOriginalFormat options were set. These are incompatible options.");
+
             BITMAP_READ_DETAILS info;
             BitmapCore.ReadHeader(data, dataLength, out info);
 
@@ -71,21 +91,72 @@ namespace BetterBmpLoader.Gdi
             if (info.compression == BitmapCompressionMode.BI_PNG || info.compression == BitmapCompressionMode.BI_JPEG)
                 return new Bitmap(new PointerStream(data, size));
 
+            // defaults
+            PixelFormat gdiFmt = PixelFormat.Format32bppArgb;
+            BitmapCorePixelFormat2 coreFmt = BitmapCorePixelFormat2.Bgra32;
 
-            var fmt = System.Drawing.Imaging.PixelFormat.Format32bppArgb;
+            if (!formatbgra32)
+            {
+                bool sourceMatched = false;
+                var origFmt = info.imgFmt;
+                if (origFmt != null)
+                {
+                    if (origFmt == BitmapCorePixelFormat2.Rgb24)
+                    {
+                        // we need BitmapCore to reverse the pixel order for GDI
+                        coreFmt = BitmapCorePixelFormat2.Bgr24;
+                        gdiFmt = PixelFormat.Format24bppRgb;
+                    }
+                    else
+                    {
+                        var pxarr = Formats.Where(f => f.coreFmt == origFmt).ToArray();
+                        if (pxarr.Length > 0)
+                        {
+                            var px = pxarr.First();
+                            gdiFmt = px.gdiFmt;
+                            coreFmt = px.coreFmt;
+                            sourceMatched = true;
+                        }
+                    }
+                }
 
-            Bitmap bitmap = new Bitmap(info.imgWidth, info.imgHeight, fmt);
-            var dlock = bitmap.LockBits(new Rectangle(0, 0, info.imgWidth, info.imgHeight), System.Drawing.Imaging.ImageLockMode.ReadWrite, fmt);
+                if (!sourceMatched && strictFormat)
+                    throw new NotSupportedException("The pixel format of this bitmap is not supported, and StrictPreserveOriginalFormat is set.");
+            }
+
+            Bitmap bitmap = new Bitmap(info.imgWidth, info.imgHeight, gdiFmt);
+            var dlock = bitmap.LockBits(new Rectangle(0, 0, info.imgWidth, info.imgHeight), System.Drawing.Imaging.ImageLockMode.ReadWrite, gdiFmt);
 
             var buf = (byte*)dlock.Scan0;
-            var preserveAlpha = (pFlags & ParserFlags.PreserveInvalidAlphaChannel) > 0;
 
-            BitmapCore.ReadPixels(ref info, )
-
-            BitmapCore.ReadPixelsToBGRA8(ref info, (data + info.imgDataOffset), buf, preserveAlpha);
+            BitmapCore.ReadPixels(ref info, coreFmt, data + info.imgDataOffset, buf, preserveAlpha);
 
             bitmap.UnlockBits(dlock);
             return bitmap;
         }
+
+        private struct PxMap
+        {
+            public PixelFormat gdiFmt;
+            public BitmapCorePixelFormat2 coreFmt;
+
+            public PxMap(PixelFormat gdi, BitmapCorePixelFormat2 core)
+            {
+                gdiFmt = gdi;
+                coreFmt = core;
+            }
+        }
+
+        private static PxMap[] Formats = new PxMap[]
+        {
+            new PxMap(PixelFormat.Format32bppArgb, BitmapCorePixelFormat2.Bgra32),
+            new PxMap(PixelFormat.Format24bppRgb, BitmapCorePixelFormat2.Bgr24),
+            new PxMap(PixelFormat.Format16bppArgb1555, BitmapCorePixelFormat2.Bgr5551),
+            new PxMap(PixelFormat.Format16bppRgb555, BitmapCorePixelFormat2.Bgr555X),
+            new PxMap(PixelFormat.Format16bppRgb565, BitmapCorePixelFormat2.Bgr565),
+            new PxMap(PixelFormat.Format8bppIndexed, BitmapCorePixelFormat2.Indexed8),
+            new PxMap(PixelFormat.Format4bppIndexed, BitmapCorePixelFormat2.Indexed4),
+            new PxMap(PixelFormat.Format1bppIndexed, BitmapCorePixelFormat2.Indexed1),
+        };
     }
 }
