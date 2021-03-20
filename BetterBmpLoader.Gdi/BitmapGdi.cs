@@ -5,6 +5,8 @@ using System.Runtime.InteropServices;
 
 namespace BetterBmpLoader.Gdi
 {
+#if EXPERIMENTAL_CMM
+
     public enum CalibrationOptions
     {
         /// <summary>
@@ -27,6 +29,7 @@ namespace BetterBmpLoader.Gdi
         /// </summary>
         FlattenTo_sRGB = 3,
     }
+#endif
 
     [Flags]
     public enum ParserFlags
@@ -46,54 +49,28 @@ namespace BetterBmpLoader.Gdi
 
     public class BitmapGdi
     {
-        public static Bitmap Read(Stream stream) => Read(stream, CalibrationOptions.Ignore);
-        public static Bitmap Read(Stream stream, CalibrationOptions colorOptions) => Read(stream, colorOptions, ParserFlags.None);
-        public static Bitmap Read(Stream stream, CalibrationOptions colorOptions, ParserFlags pFlags)
-        {
-            if (stream is MemoryStream mem)
-            {
-                return Read(mem.GetBuffer(), colorOptions, pFlags);
-            }
-            else
-            {
-                byte[] buffer = new byte[4096];
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    while (true)
-                    {
-                        int read = stream.Read(buffer, 0, buffer.Length);
-                        if (read <= 0)
-                            return Read(ms.GetBuffer(), colorOptions, pFlags);
-                        ms.Write(buffer, 0, read);
-                    }
-                }
-            }
-        }
-        public static Bitmap Read(byte[] data) => Read(data, CalibrationOptions.Ignore);
-        public static Bitmap Read(byte[] data, CalibrationOptions colorOptions) => Read(data, colorOptions, ParserFlags.None);
-        public unsafe static Bitmap Read(byte[] data, CalibrationOptions colorOptions, ParserFlags pFlags)
+        public static Bitmap Read(Stream stream) => Read(StructUtil.ReadBytes(stream));
+
+        public static Bitmap Read(Stream stream, ParserFlags pFlags) => Read(StructUtil.ReadBytes(stream), pFlags);
+
+        public static Bitmap Read(byte[] data) => Read(data, ParserFlags.None);
+
+        public unsafe static Bitmap Read(byte[] data, ParserFlags pFlags)
         {
             fixed (byte* ptr = data)
-                return Read(ptr, data.Length, colorOptions, pFlags);
+                return Read(ptr, data.Length, pFlags);
         }
-        public unsafe static Bitmap Read(byte* data, int dataLength, CalibrationOptions colorOptions, ParserFlags pFlags)
+
+        public unsafe static Bitmap Read(byte* data, int dataLength, ParserFlags pFlags)
         {
             BITMAP_READ_DETAILS info;
             BitmapCore.ReadHeader(data, dataLength, out info);
 
             // we do this parsing here since BitmapCore has no references to System.Drawing
-            if (info.compression == BitmapCompressionMode.BI_PNG)
-            {
-                byte[] pngImg = new byte[info.imgDataSize];
-                Marshal.Copy((IntPtr)(data + info.imgDataOffset), pngImg, 0, pngImg.Length);
-                return new Bitmap(new MemoryStream(pngImg));
-            }
-            else if (info.compression == BitmapCompressionMode.BI_JPEG)
-            {
-                byte[] jpegImg = new byte[info.imgDataSize];
-                Marshal.Copy((IntPtr)(data + info.imgDataOffset), jpegImg, 0, jpegImg.Length);
-                return new Bitmap(new MemoryStream(jpegImg));
-            }
+            var size = info.imgDataSize != 0 ? info.imgDataSize : (uint)dataLength;
+            if (info.compression == BitmapCompressionMode.BI_PNG || info.compression == BitmapCompressionMode.BI_JPEG)
+                return new Bitmap(new PointerStream(data, size));
+
 
             var fmt = System.Drawing.Imaging.PixelFormat.Format32bppArgb;
 
@@ -102,17 +79,10 @@ namespace BetterBmpLoader.Gdi
 
             var buf = (byte*)dlock.Scan0;
             var preserveAlpha = (pFlags & ParserFlags.PreserveInvalidAlphaChannel) > 0;
-            BitmapCore.ReadPixelsToBGRA8(ref info, (data + info.imgDataOffset), buf, preserveAlpha);
 
-            try
-            {
-                Lcms.TransformBGRA8(ref info, data, buf, dlock.Stride);
-            }
-            catch
-            {
-                if (colorOptions != CalibrationOptions.TryBestEffort)
-                    throw;
-            }
+            BitmapCore.ReadPixels(ref info, )
+
+            BitmapCore.ReadPixelsToBGRA8(ref info, (data + info.imgDataOffset), buf, preserveAlpha);
 
             bitmap.UnlockBits(dlock);
             return bitmap;

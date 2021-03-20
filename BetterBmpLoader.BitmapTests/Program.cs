@@ -28,8 +28,8 @@ namespace BetterBmpLoader.BitmapTests
             foreach (var file in Directory.EnumerateFiles("bitmaps", "*.bmp", SearchOption.TopDirectoryOnly).OrderBy(k => k))
             {
                 //if (!file.Contains("rgb32-7187"))
-                //if (!file.Contains("rgb24png"))
-                //    continue;
+                if (!file.Contains("huff"))
+                    continue;
 
                 var name = Path.GetFileNameWithoutExtension(file);
                 var bmpPath = Path.Combine("output", name + ".bmp");
@@ -46,7 +46,7 @@ namespace BetterBmpLoader.BitmapTests
                     Console.WriteLine(name);
 
                     // WPF
-                    var bmp = BitmapWpf.Read(data, Wpf.CalibrationOptions.PreserveColorProfile, Wpf.ParserFlags.PreserveInvalidAlphaChannel);
+                    var bmp = BitmapWpf.Read(data, Wpf.BitmapWpfParserFlags.PreserveInvalidAlphaChannel);
                     PngBitmapEncoder enc = new PngBitmapEncoder();
                     enc.Frames.Add(bmp as BitmapFrame ?? BitmapFrame.Create(bmp));
                     var ms = new MemoryStream();
@@ -54,8 +54,20 @@ namespace BetterBmpLoader.BitmapTests
                     File.WriteAllBytes(pngPath, ms.GetBuffer());
 
                     // GDI
+                    var b = BitmapWpf.GetBytes(bmp, BitmapWpfWriterFlags.None);
+                    File.WriteAllBytes(pngGdiPath, b);
 
-                    File.WriteAllBytes(pngGdiPath, BitmapWpf.GetBytes(bmp));
+                    //var p2 = BitmapWpf.Read(b);
+
+                    //var asd = new BmpBitmapDecoder(new MemoryStream(b), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                    //var p2 = asd.Frames[0];
+
+                    //var asdjasd = new BmpBitmapEncoder();
+                    //asdjasd.Frames.Add(p2);
+                    //var ms2 = new MemoryStream();
+                    //asdjasd.Save(ms2);
+                    //File.WriteAllBytes(pngGdiPath, ms2.GetBuffer());
+
 
                     //var bmp2 = BitmapGdi.Read(data, Gdi.CalibrationOptions.TryBestEffort, Gdi.ParserFlags.PreserveInvalidAlphaChannel);
                     //bmp2.Save(pngGdiPath, ImageFormat.Png);
@@ -71,8 +83,8 @@ namespace BetterBmpLoader.BitmapTests
 
 
             File.AppendAllText("render.html", "</table></body></html>");
-            Process.Start("render.html");
-            Console.Read();
+            //Process.Start("render.html");
+            //Console.Read();
         }
     }
 }
