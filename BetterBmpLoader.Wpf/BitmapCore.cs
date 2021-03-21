@@ -318,8 +318,8 @@ namespace BetterBmpLoader
                 if (!lgBit && !smBit)
                     throw new NotSupportedException($"Bitmap with bits per pixel of '{nbits}' are not valid.");
 
-                if (lgBit && (maskR == 0 || maskB == 0 || maskG == 0))
-                    throw new NotSupportedException($"Bitmap (bbp {nbits}) color masks could not be determined, this usually indicates a malformed bitmap file.");
+                //if (lgBit && (maskR == 0 || maskB == 0 || maskG == 0))
+                //    throw new NotSupportedException($"Bitmap (bbp {nbits}) color masks could not be determined, this usually indicates a malformed bitmap file.");
             }
 
             // The number of entries in the palette is either 2n (where n is the number of bits per pixel) or a smaller number specified in the header
@@ -331,8 +331,19 @@ namespace BetterBmpLoader
             //var bitsperpal = is_os21x_ ? 3 : 4;
             //var palmax = (data.Length - offset - bi.bV5SizeImage) / bitsperpal;
 
-            if (pallength > 65536) // technically the max is 256..? some bitmaps have invalidly large palettes
-                throw new NotSupportedException("Bitmap has an oversized/invalid color palette.");
+            if (pallength > 256) // technically the max is 256..? some bitmaps have invalidly/absurdly large palettes
+            {
+                if (hasFileHeader)
+                {
+                    // if we have a file header, we can correct our pixel data offset below, so the only 
+                    // important thing is that we don't read too many colors.
+                    pallength = 256;
+                }
+                else
+                {
+                    throw new NotSupportedException("Bitmap has an oversized/invalid color palette.");
+                }
+            }
 
             RGBQUAD[] palette = new RGBQUAD[pallength];
             var clrSize = is_os21x_ ? Marshal.SizeOf<RGBTRIPLE>() : Marshal.SizeOf<RGBQUAD>();
@@ -443,23 +454,19 @@ namespace BetterBmpLoader
             {
                 throw new NotSupportedException("BI_JPEG and BI_PNG passthrough compression is not supported.");
             }
-
-            if (compr == BitmapCompressionMode.BI_RLE4 || compr == BitmapCompressionMode.BI_RLE8 || compr == BitmapCompressionMode.OS2_RLE24)
+            else if (compr == BitmapCompressionMode.BI_RLE4 || compr == BitmapCompressionMode.BI_RLE8 || compr == BitmapCompressionMode.OS2_RLE24)
             {
                 if (toFmt != BitmapCorePixelFormat2.Bgra32)
-                    throw new NotSupportedException("RLE only currently supports being translated to Bgra32");
+                    throw new NotSupportedException("RLE only supports being translated to Bgra32");
 
                 ReadRLE_32(ref info, sourceBufferStart, destBufferStart);
                 return;
             }
-
-            if (compr == BitmapCompressionMode.OS2_HUFFMAN1D)
+            else if (compr == BitmapCompressionMode.OS2_HUFFMAN1D)
             {
                 ReadHuffmanG31D(ref info, sourceBufferStart, destBufferStart);
-                return;
             }
-
-            if (info.imgFmt == toFmt && info.cTrueAlpha == toFmt.HasAlpha)
+            else if (info.imgFmt == toFmt && info.cTrueAlpha == toFmt.HasAlpha)
             {
                 // if the source is a known/supported/standard format, we can basically just copy the buffer straight over with no further processing
                 if (info.imgTopDown)
@@ -480,9 +487,20 @@ namespace BetterBmpLoader
                     }
                 }
             }
-            else
+            else if (info.bbp <= 8)
+            {
+                if (toFmt != BitmapCorePixelFormat2.Bgra32)
+                    throw new NotSupportedException("RLE only supports being translated to Bgra32");
+
+                ReadIndexedTo32(ref info, sourceBufferStart, destBufferStart);
+            }
+            else if (info.bbp > 8)
             {
                 ReadBGRA_162432(ref info, toFmt.Write, sourceBufferStart, destBufferStart, preserveFakeAlpha);
+            }
+            else
+            {
+                throw new NotSupportedException("Pixel format / compression not supported");
             }
         }
 
@@ -614,6 +632,148 @@ namespace BetterBmpLoader
                         source += nbytes;
                     }
                 }
+            }
+        }
+
+        public static void ReadIndexedTo32(ref BITMAP_READ_DETAILS info, byte* sourceBufferStart, byte* destBufferStart)
+        {
+            var palette = info.imgColorTable;
+            var nbits = info.bbp;
+            var width = info.imgWidth;
+            var height = info.imgHeight;
+            var upside_down = info.imgTopDown;
+
+            int source_stride = (nbits * width + 31) / 32 * 4; // = width * (nbits / 8) + (width % 4); // (width * nbits + 7) / 8;
+            int dest_stride = info.imgWidth * 4;
+
+            RGBQUAD color;
+            int pal = palette.Length;
+            byte i4;
+            byte* source;
+            uint* dest;
+            int y, x, w, h = height, nbytes = (nbits / 8);
+
+            if (nbits == 1)
+            {
+                while (--h >= 0)
+                {
+                    y = height - h - 1;
+                    dest = (uint*)(destBufferStart + ((upside_down ? y : h) * dest_stride));
+                    source = sourceBufferStart + (y * source_stride);
+                    for (x = 0; x < source_stride - 1; x++)
+                    {
+                        i4 = *source++;
+                        for (int bit = 7; bit >= 0; bit--)
+                        {
+                            color = palette[(i4 & (1 << bit)) >> bit];
+                            *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                        }
+                    }
+
+                    // last bits in a row might not make up a whole byte
+                    i4 = *source++;
+                    for (int bit = 7; bit >= 8 - (width - ((source_stride - 1) * 8)); bit--)
+                    {
+                        color = palette[(i4 & (1 << bit)) >> bit];
+                        *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    }
+                }
+            }
+            else if (nbits == 2)
+            {
+                var px_remain = width % 4;
+                if (px_remain == 0) px_remain = 4;
+
+                while (--h >= 0)
+                {
+                    y = height - h - 1;
+                    dest = (uint*)(destBufferStart + ((upside_down ? y : h) * dest_stride));
+                    source = sourceBufferStart + (y * source_stride);
+                    for (x = 0; x < source_stride - 1; x++)
+                    {
+                        i4 = *source++;
+
+                        color = palette[((i4 & 0b_1100_0000) >> 6) % pal];
+                        *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+
+                        color = palette[((i4 & 0b_0011_0000) >> 4) % pal];
+                        *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+
+                        color = palette[((i4 & 0b_0000_1100) >> 2) % pal];
+                        *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+
+                        color = palette[((i4 & 0b_0000_0011) >> 0) % pal];
+                        *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    }
+
+                    i4 = *source++;
+
+                    if (px_remain > 0)
+                    {
+                        color = palette[((i4 & 0b_1100_0000) >> 6) % pal];
+                        *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    }
+                    if (px_remain > 1)
+                    {
+                        color = palette[((i4 & 0b_0011_0000) >> 4) % pal];
+                        *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    }
+                    if (px_remain > 2)
+                    {
+                        color = palette[((i4 & 0b_0000_1100) >> 2) % pal];
+                        *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    }
+                    if (px_remain > 3)
+                    {
+                        color = palette[((i4 & 0b_0000_0011) >> 0) % pal];
+                        *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    }
+                }
+            }
+            else if (nbits == 4)
+            {
+                var px_remain = width % 2;
+                while (--h >= 0)
+                {
+                    y = height - h - 1;
+                    dest = (uint*)(destBufferStart + ((upside_down ? y : h) * dest_stride));
+                    source = sourceBufferStart + (y * source_stride);
+                    for (x = 0; x < source_stride - px_remain; x++)
+                    {
+                        i4 = *source++;
+                        color = palette[((i4 & 0b_1111_0000) >> 4) % pal];
+                        *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                        color = palette[((i4 & 0b_0000_1111) >> 0) % pal];
+                        *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    }
+
+                    if (px_remain > 0)
+                    {
+                        i4 = *source++;
+                        color = palette[((i4 & 0b_1111_0000) >> 4) % pal];
+                        *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    }
+                }
+            }
+            else if (nbits == 8)
+            {
+                while (--h >= 0)
+                {
+                    y = height - h - 1;
+                    dest = (uint*)(destBufferStart + ((upside_down ? y : h) * dest_stride));
+                    source = sourceBufferStart + (y * source_stride);
+                    w = width;
+                    while (--w >= 0)
+                    {
+                        i4 = *source++;
+                        color = palette[i4 % pal];
+                        *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    }
+                }
+            }
+            else
+            {
+                throw new NotSupportedException($"Bitmap bits-per-pixel ({nbits}) is not supported.");
             }
         }
 
@@ -963,7 +1123,7 @@ namespace BetterBmpLoader
                 // Typical structure:
                 // - BITMAPFILEHEADER (Optional)
                 // - BITMAPV5HEADER
-                // - BI_BITFIELDS (Optional)
+                // - * Note, never write BI_BITFIELDS at the end of a V5 header, these masks are contained within the header itself
                 // - Color Table (Optional)
                 // - Pixel Data
                 // - Embedded Color Profile (Optional)
@@ -999,10 +1159,6 @@ namespace BetterBmpLoader
 
                 uint offset = renderFileHeader ? fhSize : 0;
                 offset += v5Size;
-
-                if (compr == BitmapCompressionMode.BI_BITFIELDS)
-                    offset += sizeof(uint) * 3;
-
                 offset += paletteSize * quadSize;
 
                 // fh offset points to beginning of pixel data
@@ -1029,12 +1185,6 @@ namespace BetterBmpLoader
                     StructUtil.SerializeTo(fh, buffer, ref offset);
 
                 StructUtil.SerializeTo(v5, buffer, ref offset);
-
-                if (compr == BitmapCompressionMode.BI_BITFIELDS)
-                {
-                    Buffer.BlockCopy(masks.BITFIELDS(), 0, buffer, (int)offset, sizeof(uint) * 3);
-                    offset += sizeof(uint) * 3;
-                }
 
                 if (info.imgColorTable != null)
                     foreach (var p in info.imgColorTable)

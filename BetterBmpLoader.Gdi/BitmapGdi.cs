@@ -202,7 +202,7 @@ namespace BetterBmpLoader.Gdi
                 headerType = htype,
             };
 
-            var bytes = BitmapCore.WriteToBMP(ref req, buf, coreFmt.Masks, coreFmt.BitsPerPixel, 0);
+            var bytes = BitmapCore.WriteToBMP(ref req, buf, coreFmt);
             bitmap.UnlockBits(dlock);
             return bytes;
         }

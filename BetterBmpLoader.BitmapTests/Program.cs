@@ -63,7 +63,7 @@ namespace BetterBmpLoader.BitmapTests
                 string suffix = "_wpf";
                 var roundPath = Path.Combine(outputDir, name + suffix + ".bmp");
                 var bmp = BitmapWpf.Read(originalBytes, BitmapWpfParserFlags.PreserveInvalidAlphaChannel);
-                File.WriteAllBytes(roundPath, BitmapWpf.GetBytes(bmp));
+                File.WriteAllBytes(roundPath, BitmapWpf.GetBytes(bmp, BitmapWpfWriterFlags.None));
 
                 var pngPath = Path.Combine(outputDir, name + suffix + ".png");
                 var pngEncoder = new PngBitmapEncoder();
@@ -86,7 +86,7 @@ namespace BetterBmpLoader.BitmapTests
                 string suffix = "_gdi";
                 var roundPath = Path.Combine(outputDir, name + suffix + ".bmp");
                 var bmp = BitmapGdi.Read(originalBytes, BitmapGdiParserFlags.PreserveInvalidAlphaChannel);
-                File.WriteAllBytes(roundPath, BitmapGdi.GetBytes(bmp)); // not yet supported
+                File.WriteAllBytes(roundPath, BitmapGdi.GetBytes(bmp, BitmapGdiWriterFlags.None)); // not yet supported
 
                 //error += bmp.PixelFormat.ToString();
                 //bmp.Save(roundPath, ImageFormat.Bmp);
