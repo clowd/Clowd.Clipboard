@@ -60,6 +60,15 @@ namespace BetterBmpLoader.Gdi
         ConvertToBGRA32 = 4
     }
 
+    [Flags]
+    public enum BitmapGdiWriterFlags
+    {
+        None = 0,
+        ForceV5Header = 1,
+        ForceInfoHeader = 2,
+        OmitFileHeader = 4,
+    }
+
     public class BitmapGdi
     {
         public static Bitmap Read(Stream stream) => Read(StructUtil.ReadBytes(stream));
@@ -86,10 +95,11 @@ namespace BetterBmpLoader.Gdi
             BITMAP_READ_DETAILS info;
             BitmapCore.ReadHeader(data, dataLength, out info);
 
+            byte* pixels = data + info.imgDataOffset;
+
             // we do this parsing here since BitmapCore has no references to System.Drawing
-            var size = info.imgDataSize != 0 ? info.imgDataSize : (uint)dataLength;
             if (info.compression == BitmapCompressionMode.BI_PNG || info.compression == BitmapCompressionMode.BI_JPEG)
-                return new Bitmap(new PointerStream(data, size));
+                return new Bitmap(new PointerStream(pixels, info.imgDataSize));
 
             // defaults
             PixelFormat gdiFmt = PixelFormat.Format32bppArgb;
@@ -125,26 +135,99 @@ namespace BetterBmpLoader.Gdi
             }
 
             Bitmap bitmap = new Bitmap(info.imgWidth, info.imgHeight, gdiFmt);
-            var dlock = bitmap.LockBits(new Rectangle(0, 0, info.imgWidth, info.imgHeight), System.Drawing.Imaging.ImageLockMode.ReadWrite, gdiFmt);
+            var dlock = bitmap.LockBits(new Rectangle(0, 0, info.imgWidth, info.imgHeight), ImageLockMode.ReadWrite, gdiFmt);
+            var buf = (byte*)dlock.Scan0;
+            BitmapCore.ReadPixels(ref info, coreFmt, pixels, buf, preserveAlpha);
+            bitmap.UnlockBits(dlock);
 
+            // update bitmap color palette
+            var gdipPalette = bitmap.Palette;
+            if (info.imgColorTable != null && gdipPalette?.Entries != null && gdipPalette.Entries.Length > 0)
+            {
+                for (int i = 0; i < info.imgColorTable.Length && i < gdipPalette.Entries.Length; i++)
+                {
+                    var quad = info.imgColorTable[i];
+                    gdipPalette.Entries[i] = Color.FromArgb(0xFF, quad.rgbRed, quad.rgbGreen, quad.rgbBlue);
+                }
+                bitmap.Palette = gdipPalette;
+            }
+
+            return bitmap;
+        }
+
+        public static byte[] GetBytes(Bitmap bitmap) => GetBytes(bitmap, BitmapGdiWriterFlags.None);
+
+        public static unsafe byte[] GetBytes(Bitmap bitmap, BitmapGdiWriterFlags wFlags)
+        {
+            var forceV5 = (wFlags & BitmapGdiWriterFlags.ForceV5Header) > 0;
+            var forceInfo = (wFlags & BitmapGdiWriterFlags.ForceInfoHeader) > 0;
+            var omitFileHeader = (wFlags & BitmapGdiWriterFlags.OmitFileHeader) > 0;
+
+            // default - this will cause GDI to convert the pixel format to bgra32 if we don't know the format directly
+            var gdiFmt = PixelFormat.Format32bppArgb;
+            var coreFmt = BitmapCorePixelFormat2.Bgra32;
+
+            var pxarr = Formats.Where(f => f.gdiFmt == bitmap.PixelFormat).ToArray();
+            if (pxarr.Length > 0)
+            {
+                var px = pxarr.First();
+                gdiFmt = px.gdiFmt;
+                coreFmt = px.coreFmt;
+            }
+
+            var htype = BitmapCoreHeaderType.BestFit;
+            if (forceV5) htype = BitmapCoreHeaderType.ForceV5;
+            else if (forceInfo) htype = BitmapCoreHeaderType.ForceVINFO;
+
+            var colorTable = bitmap.Palette.Entries.Select(e => new RGBQUAD { rgbBlue = e.B, rgbGreen = e.G, rgbRed = e.R }).ToArray();
+
+            var dlock = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, gdiFmt);
             var buf = (byte*)dlock.Scan0;
 
-            BitmapCore.ReadPixels(ref info, coreFmt, data + info.imgDataOffset, buf, preserveAlpha);
+            //int stride = (coreFmt.BitsPerPixel * bitmap.Width + 31) / 32 * 4;
+            //byte[] buffer = new byte[stride * bitmap.Height];
 
+            BITMAP_WRITE_REQUEST req = new BITMAP_WRITE_REQUEST
+            {
+                dpiX = 0,
+                dpiY = 0,
+                imgWidth = bitmap.Width,
+                imgHeight = bitmap.Height,
+                imgStride = (uint)dlock.Stride,
+                imgTopDown = true,
+                imgColorTable = colorTable,
+                headerIncludeFile = !omitFileHeader,
+                iccEmbed = false,
+                iccProfileData = null,
+                headerType = htype,
+            };
+
+            var bytes = BitmapCore.WriteToBMP(ref req, buf, coreFmt.Masks, coreFmt.BitsPerPixel, 0);
             bitmap.UnlockBits(dlock);
-            return bitmap;
+            return bytes;
         }
 
         private struct PxMap
         {
             public PixelFormat gdiFmt;
             public BitmapCorePixelFormat2 coreFmt;
+            //public ushort bbp;
+            //public BITMASKS masks;
 
             public PxMap(PixelFormat gdi, BitmapCorePixelFormat2 core)
             {
                 gdiFmt = gdi;
                 coreFmt = core;
+                //bpp = bits;
+                //masks = mks;
             }
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 0)]
+        private struct LOGPALETTE0
+        {
+            public ushort palVersion;
+            public ushort palNumEntries;
         }
 
         private static PxMap[] Formats = new PxMap[]
@@ -157,6 +240,30 @@ namespace BetterBmpLoader.Gdi
             new PxMap(PixelFormat.Format8bppIndexed, BitmapCorePixelFormat2.Indexed8),
             new PxMap(PixelFormat.Format4bppIndexed, BitmapCorePixelFormat2.Indexed4),
             new PxMap(PixelFormat.Format1bppIndexed, BitmapCorePixelFormat2.Indexed1),
+
+            ////new PxMap(PixelFormat.Undefined, null, 0, new BITMASKS(0,0,0,0)),
+            ////new PxMap(PixelFormat.DontCare, null, 0, new BITMASKS(0,0,0,0)),
+            ////new PxMap(PixelFormat.Max, null, 0, new BITMASKS(0,0,0,0)),
+            ////new PxMap(PixelFormat.Indexed, null, 0, new BITMASKS(0,0,0,0)),
+            ////new PxMap(PixelFormat.Gdi, null, 0, new BITMASKS(0,0,0,0)),
+            //new PxMap(PixelFormat.Format16bppRgb555, BitmapCorePixelFormat2.Bgr555X, 16, new BITMASKS(0,0,0,0)),
+            //new PxMap(PixelFormat.Format16bppRgb565, BitmapCorePixelFormat2.Bgr565, 0, new BITMASKS(0,0,0,0)),
+            //new PxMap(PixelFormat.Format24bppRgb, null, 0, new BITMASKS(0,0,0,0)),
+            //new PxMap(PixelFormat.Format32bppRgb, null, 0, new BITMASKS(0,0,0,0)),
+            //new PxMap(PixelFormat.Format1bppIndexed, null, 0, new BITMASKS(0,0,0,0)),
+            //new PxMap(PixelFormat.Format4bppIndexed, null, 0, new BITMASKS(0,0,0,0)),
+            //new PxMap(PixelFormat.Format8bppIndexed, null, 0, new BITMASKS(0,0,0,0)),
+            ////new PxMap(PixelFormat.Alpha, null, 0, new BITMASKS(0,0,0,0)),
+            //new PxMap(PixelFormat.Format16bppArgb1555, null, 0, new BITMASKS(0,0,0,0)),
+            ////new PxMap(PixelFormat.PAlpha, null, 0, new BITMASKS(0,0,0,0)),
+            //new PxMap(PixelFormat.Format32bppPArgb, null, 0, new BITMASKS(0,0,0,0)),
+            ////new PxMap(PixelFormat.Extended, null, 0, new BITMASKS(0,0,0,0)),
+            ////new PxMap(PixelFormat.Format16bppGrayScale, null, 0, new BITMASKS(0,0,0,0)),
+            ////new PxMap(PixelFormat.Format48bppRgb, null, 0, new BITMASKS(0,0,0,0)),
+            ////new PxMap(PixelFormat.Format64bppPArgb, null, 0, new BITMASKS(0,0,0,0)),
+            ////new PxMap(PixelFormat.Canonical, null, 0, new BITMASKS(0,0,0,0)),
+            //new PxMap(PixelFormat.Format32bppArgb, null, 0, new BITMASKS(0,0,0,0)),
+            ////new PxMap(PixelFormat.Format64bppArgb, null, 0, new BITMASKS(0,0,0,0)),
         };
     }
 }

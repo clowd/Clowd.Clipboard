@@ -124,9 +124,9 @@ namespace BetterBmpLoader.Wpf
             return BitmapWpfInternal.Read(ref info, data, dataLength, preserveAlpha, preserveFormat, bgra32);
         }
 
-        public static unsafe byte[] GetBytes(BitmapFrame bitmap) => GetBytes(bitmap, BitmapWpfWriterFlags.None);
+        public static byte[] GetBytes(BitmapFrame bitmap) => GetBytes(bitmap, BitmapWpfWriterFlags.None);
 
-        public static unsafe byte[] GetBytes(BitmapFrame bitmap, BitmapWpfWriterFlags wFlags)
+        public static byte[] GetBytes(BitmapFrame bitmap, BitmapWpfWriterFlags wFlags)
         {
             var forceV5 = (wFlags & BitmapWpfWriterFlags.ForceV5Header) > 0;
             var forceInfo = (wFlags & BitmapWpfWriterFlags.ForceInfoHeader) > 0;

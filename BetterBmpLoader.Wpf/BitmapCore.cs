@@ -214,66 +214,45 @@ namespace BetterBmpLoader
             switch (bi.bV5Compression)
             {
                 case BitmapCompressionMode.BI_BITFIELDS:
-
-
-                    if (header_size >= 52)
+                    // larger headers contain the BI_BITFIELDS masks within them and are not expected to write them after the header
+                    if (header_size > 40)
                         break;
 
+                    // 3 x u32 if OS2v1 or WindowsV2
+                    // 4 x u32 if any other version??? find anywhere to confirm this?
 
-                    // seems that v5 bitmaps sometimes do not have a color table, even if BI_BITFIELDS is set
-                    // we read/skip them here anyways, if we have a file header we can correct the offset later
-                    // whether or not these follow the header depends entirely on the application that created the bitmap..
-                    // if (header_size <= 40)
-                    // {
+                    if (is_os21x_)
+                    {
+                        var rgb = StructUtil.Deserialize<MASKTRIPLE>(ptr);
+                        maskR = rgb.rgbRed;
+                        maskG = rgb.rgbGreen;
+                        maskB = rgb.rgbBlue;
+                        offset += Marshal.SizeOf<MASKTRIPLE>();
+                    }
+                    else
+                    {
+                        var rgb = StructUtil.Deserialize<MASKQUAD>(ptr);
+                        maskR = rgb.rgbRed;
+                        maskG = rgb.rgbGreen;
+                        maskB = rgb.rgbBlue;
+                        // we ignore the alpha mask here as it's invalid with BI_BITFIELDS
+                        offset += Marshal.SizeOf<MASKQUAD>();
+                    }
 
-                    // OS/2 bitmaps are only 9 bytes here instead of 12 as they are not aligned, 
-                    // is that true? it is for color table.. not sure about bitfields
-
-                    //if (is_os21x_)
-                    //{
-                    //    maskR = BitConverter.ToUInt32(data, offset) & 0x00FF_FFFF;
-                    //    offset += 3;
-                    //    maskG = BitConverter.ToUInt32(data, offset) & 0x00FF_FFFF;
-                    //    offset += 3;
-                    //    maskB = BitConverter.ToUInt32(data, offset) & 0x00FF_FFFF;
-                    //    offset += 3;
-                    //}
-                    //else
-
-                    var btfiSize = (sizeof(uint) * 3);
-                    if (offset + btfiSize > sourceLength)
-                        throw new InvalidOperationException(ERR_HEOF);
-
-                    maskR = StructUtil.ReadU32(ptr);
-                    ptr += sizeof(uint);
-                    maskG = StructUtil.ReadU32(ptr);
-                    ptr += sizeof(uint);
-                    maskB = StructUtil.ReadU32(ptr);
-                    ptr += sizeof(uint);
-                    offset += btfiSize;
-
-                    // maskR | maskG | maskB == 1 << nbits - 1
-                    // do these overlap, and do they add up to 0xFFFFFF
-                    // }
                     break;
                 case BitmapCompressionMode.BI_ALPHABITFIELDS:
 
-                    if (header_size >= 56)
+                    // larger headers contain the BI_BITFIELDS masks within them and are not expected to write them after the header
+                    if (header_size > 40)
                         break;
 
-                    var btfiaSize = (sizeof(uint) * 4);
-                    if (offset + btfiaSize > sourceLength)
-                        throw new InvalidOperationException(ERR_HEOF);
+                    var rgba = StructUtil.Deserialize<MASKQUAD>(ptr);
+                    maskR = rgba.rgbRed;
+                    maskG = rgba.rgbGreen;
+                    maskB = rgba.rgbBlue;
+                    maskA = rgba.rgbAlpha;
+                    offset += Marshal.SizeOf<MASKQUAD>();
 
-                    maskR = StructUtil.ReadU32(ptr);
-                    ptr += sizeof(uint);
-                    maskG = StructUtil.ReadU32(ptr);
-                    ptr += sizeof(uint);
-                    maskB = StructUtil.ReadU32(ptr);
-                    ptr += sizeof(uint);
-                    maskA = StructUtil.ReadU32(ptr);
-                    ptr += sizeof(uint);
-                    offset += btfiaSize;
                     hasAlphaChannel = true;
                     break;
                 case BitmapCompressionMode.BI_RGB:
@@ -306,8 +285,12 @@ namespace BetterBmpLoader
                 case BitmapCompressionMode.BI_RLE4:
                 case BitmapCompressionMode.BI_RLE8:
                 case BitmapCompressionMode.OS2_RLE24:
-                case BitmapCompressionMode.OS2_HUFFMAN1D:
                     if (bi.bV5Height < 0) throw new NotSupportedException("Top-down bitmaps are not supported with RLE/JPEG/PNG compression.");
+                    skipVerifyBppAndMasks = true;
+                    break;
+                case BitmapCompressionMode.OS2_HUFFMAN1D:
+                    if (bi.bV5Height < 0) throw new NotSupportedException("Top-down bitmaps are not supported with Huffman1D compression.");
+                    if (bi.bV5BitCount != 1) throw new NotSupportedException("Huffman1D compression is only supported with 1bpp bitmaps");
                     skipVerifyBppAndMasks = true;
                     break;
                 default:
@@ -315,10 +298,13 @@ namespace BetterBmpLoader
             }
 
             // lets use the v3/v4/v5 masks if present instead of BITFIELDS or RGB
-            if (bi.bV5RedMask != 0) maskR = bi.bV5RedMask;
-            if (bi.bV5BlueMask != 0) maskB = bi.bV5BlueMask;
-            if (bi.bV5GreenMask != 0) maskG = bi.bV5GreenMask;
-            if (bi.bV5AlphaMask != 0)
+            if (bi.bV5Size >= 52)
+            {
+                if (bi.bV5RedMask != 0) maskR = bi.bV5RedMask;
+                if (bi.bV5BlueMask != 0) maskB = bi.bV5BlueMask;
+                if (bi.bV5GreenMask != 0) maskG = bi.bV5GreenMask;
+            }
+            if (bi.bV5Size >= 56 && bi.bV5AlphaMask != 0)
             {
                 maskA = bi.bV5AlphaMask;
                 hasAlphaChannel = true;
@@ -415,7 +401,6 @@ namespace BetterBmpLoader
             // currently we only support RLE -> Bgra32
             if (bi.bV5Compression == BitmapCompressionMode.BI_RLE4 || bi.bV5Compression == BitmapCompressionMode.BI_RLE8 || bi.bV5Compression == BitmapCompressionMode.OS2_RLE24)
                 fmt = null;
-            //     fmt = BitmapCorePixelFormat2.Bgra32;
 
             double pixelPerMeterToDpi(int pels)
             {
@@ -2161,6 +2146,23 @@ namespace BetterBmpLoader
         public byte rgbBlue;
         public byte rgbGreen;
         public byte rgbRed;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MASKTRIPLE
+    {
+        public uint rgbRed;
+        public uint rgbGreen;
+        public uint rgbBlue;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MASKQUAD
+    {
+        public uint rgbRed;
+        public uint rgbGreen;
+        public uint rgbBlue;
+        public uint rgbAlpha;
     }
 
     internal unsafe class PointerStream : Stream
