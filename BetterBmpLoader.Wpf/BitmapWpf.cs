@@ -35,7 +35,7 @@ namespace BetterBmpLoader.Wpf
 #endif
 
     [Flags]
-    public enum BitmapWpfParserFlags
+    public enum BitmapWpfReaderFlags
     {
         /// <summary>
         /// No special parsing flags
@@ -99,24 +99,24 @@ namespace BetterBmpLoader.Wpf
 #else
         public static BitmapFrame Read(Stream stream) => Read(StructUtil.ReadBytes(stream));
 
-        public static BitmapFrame Read(Stream stream, BitmapWpfParserFlags pFlags) => Read(StructUtil.ReadBytes(stream), pFlags);
+        public static BitmapFrame Read(Stream stream, BitmapWpfReaderFlags pFlags) => Read(StructUtil.ReadBytes(stream), pFlags);
 
-        public static BitmapFrame Read(byte[] data) => Read(data, BitmapWpfParserFlags.None);
+        public static BitmapFrame Read(byte[] data) => Read(data, BitmapWpfReaderFlags.None);
 
-        public unsafe static BitmapFrame Read(byte[] data, BitmapWpfParserFlags pFlags)
+        public unsafe static BitmapFrame Read(byte[] data, BitmapWpfReaderFlags pFlags)
         {
             fixed (byte* ptr = data)
                 return Read(ptr, data.Length, pFlags);
         }
 
-        public unsafe static BitmapFrame Read(byte* data, int dataLength, BitmapWpfParserFlags pFlags)
+        public unsafe static BitmapFrame Read(byte* data, int dataLength, BitmapWpfReaderFlags pFlags)
 #endif
         {
             BITMAP_READ_DETAILS info;
             BitmapCore.ReadHeader(data, dataLength, out info);
-            var preserveAlpha = (pFlags & BitmapWpfParserFlags.PreserveInvalidAlphaChannel) > 0;
-            var preserveFormat = (pFlags & BitmapWpfParserFlags.StrictPreserveOriginalFormat) > 0;
-            var bgra32 = (pFlags & BitmapWpfParserFlags.ConvertToBGRA32) > 0;
+            var preserveAlpha = (pFlags & BitmapWpfReaderFlags.PreserveInvalidAlphaChannel) > 0;
+            var preserveFormat = (pFlags & BitmapWpfReaderFlags.StrictPreserveOriginalFormat) > 0;
+            var bgra32 = (pFlags & BitmapWpfReaderFlags.ConvertToBGRA32) > 0;
 
             if (preserveFormat && bgra32)
                 throw new ArgumentException("Both ConvertToBGRA32 and StrictPreserveOriginalFormat options were set. These are incompatible options.");

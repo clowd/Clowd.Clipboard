@@ -34,7 +34,7 @@ namespace BetterBmpLoader.Gdi
 #endif
 
     [Flags]
-    public enum BitmapGdiParserFlags
+    public enum BitmapGdiReaderFlags
     {
         /// <summary>
         /// No special parsing flags
@@ -73,21 +73,21 @@ namespace BetterBmpLoader.Gdi
     {
         public static Bitmap Read(Stream stream) => Read(StructUtil.ReadBytes(stream));
 
-        public static Bitmap Read(Stream stream, BitmapGdiParserFlags pFlags) => Read(StructUtil.ReadBytes(stream), pFlags);
+        public static Bitmap Read(Stream stream, BitmapGdiReaderFlags pFlags) => Read(StructUtil.ReadBytes(stream), pFlags);
 
-        public static Bitmap Read(byte[] data) => Read(data, BitmapGdiParserFlags.None);
+        public static Bitmap Read(byte[] data) => Read(data, BitmapGdiReaderFlags.None);
 
-        public unsafe static Bitmap Read(byte[] data, BitmapGdiParserFlags pFlags)
+        public unsafe static Bitmap Read(byte[] data, BitmapGdiReaderFlags pFlags)
         {
             fixed (byte* ptr = data)
                 return Read(ptr, data.Length, pFlags);
         }
 
-        public unsafe static Bitmap Read(byte* data, int dataLength, BitmapGdiParserFlags pFlags)
+        public unsafe static Bitmap Read(byte* data, int dataLength, BitmapGdiReaderFlags pFlags)
         {
-            var preserveAlpha = (pFlags & BitmapGdiParserFlags.PreserveInvalidAlphaChannel) > 0;
-            var strictFormat = (pFlags & BitmapGdiParserFlags.StrictPreserveOriginalFormat) > 0;
-            var formatbgra32 = (pFlags & BitmapGdiParserFlags.ConvertToBGRA32) > 0;
+            var preserveAlpha = (pFlags & BitmapGdiReaderFlags.PreserveInvalidAlphaChannel) > 0;
+            var strictFormat = (pFlags & BitmapGdiReaderFlags.StrictPreserveOriginalFormat) > 0;
+            var formatbgra32 = (pFlags & BitmapGdiReaderFlags.ConvertToBGRA32) > 0;
 
             if (strictFormat && formatbgra32)
                 throw new ArgumentException("Both ConvertToBGRA32 and StrictPreserveOriginalFormat options were set. These are incompatible options.");
