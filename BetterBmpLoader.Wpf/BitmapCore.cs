@@ -407,7 +407,7 @@ namespace BetterBmpLoader
                 maskAlpha = maskA,
             };
 
-            var fmt = BitmapCorePixelFormat2.Formats.SingleOrDefault(f => f.IsMatch(nbits, masks));
+            var fmt = BitmapCorePixelFormat.Formats.SingleOrDefault(f => f.IsMatch(nbits, masks));
 
             // currently we only support RLE -> Bgra32
             if (bi.bV5Compression == BitmapCompressionMode.BI_RLE4 || bi.bV5Compression == BitmapCompressionMode.BI_RLE8 || bi.bV5Compression == BitmapCompressionMode.OS2_RLE24)
@@ -447,7 +447,7 @@ namespace BetterBmpLoader
             };
         }
 
-        public static void ReadPixels(ref BITMAP_READ_DETAILS info, BitmapCorePixelFormat2 toFmt, byte* sourceBufferStart, byte* destBufferStart, bool preserveFakeAlpha)
+        public static void ReadPixels(ref BITMAP_READ_DETAILS info, BitmapCorePixelFormat toFmt, byte* sourceBufferStart, byte* destBufferStart, bool preserveFakeAlpha)
         {
             var compr = info.compression;
             if (compr == BitmapCompressionMode.BI_JPEG || compr == BitmapCompressionMode.BI_PNG)
@@ -456,7 +456,7 @@ namespace BetterBmpLoader
             }
             else if (compr == BitmapCompressionMode.BI_RLE4 || compr == BitmapCompressionMode.BI_RLE8 || compr == BitmapCompressionMode.OS2_RLE24)
             {
-                if (toFmt != BitmapCorePixelFormat2.Bgra32)
+                if (toFmt != BitmapCorePixelFormat.Bgra32)
                     throw new NotSupportedException("RLE only supports being translated to Bgra32");
 
                 ReadRLE_32(ref info, sourceBufferStart, destBufferStart);
@@ -489,7 +489,7 @@ namespace BetterBmpLoader
             }
             else if (info.bbp <= 8)
             {
-                if (toFmt != BitmapCorePixelFormat2.Bgra32)
+                if (toFmt != BitmapCorePixelFormat.Bgra32)
                     throw new NotSupportedException("RLE only supports being translated to Bgra32");
 
                 ReadIndexedTo32(ref info, sourceBufferStart, destBufferStart);
@@ -1073,7 +1073,7 @@ namespace BetterBmpLoader
             }
         }
 
-        public static byte[] WriteToBMP(ref BITMAP_WRITE_REQUEST info, byte* sourceBufferStart, BitmapCorePixelFormat2 fmt)
+        public static byte[] WriteToBMP(ref BITMAP_WRITE_REQUEST info, byte* sourceBufferStart, BitmapCorePixelFormat fmt)
         {
             return WriteToBMP(ref info, sourceBufferStart, fmt.Masks, fmt.BitsPerPixel, fmt.LcmsFormat);
         }
@@ -1118,7 +1118,6 @@ namespace BetterBmpLoader
             // write V5 header if embedded color profile or has alpha data
             if (info.headerType != BitmapCoreHeaderType.ForceVINFO && (info.headerType == BitmapCoreHeaderType.ForceV5 || hasAlpha || (iccEmbed && hasIcc)))
             {
-                Console.WriteLine("V5");
                 var v5Size = (uint)Marshal.SizeOf<BITMAPV5HEADER>();
                 // Typical structure:
                 // - BITMAPFILEHEADER (Optional)
@@ -1198,7 +1197,6 @@ namespace BetterBmpLoader
             }
             else
             {
-                Console.WriteLine("VINFO");
                 var infoSize = (uint)Marshal.SizeOf<BITMAPINFOHEADER>();
                 // Typical structure:
                 // - BITMAPFILEHEADER (Optional)
@@ -1700,7 +1698,7 @@ namespace BetterBmpLoader
 
     internal unsafe delegate byte* WritePixelToPtr(byte* ptr, byte b, byte g, byte r, byte a);
 
-    internal unsafe class BitmapCorePixelFormat2 : IEquatable<BitmapCorePixelFormat2>
+    internal unsafe class BitmapCorePixelFormat : IEquatable<BitmapCorePixelFormat>
     {
         public bool IsIndexed => BitsPerPixel < 16;
         public bool HasAlpha => Masks.maskAlpha != 0;
@@ -1710,29 +1708,29 @@ namespace BetterBmpLoader
         public WritePixelToPtr Write { get; private set; }
         public ushort BitsPerPixel { get; private set; }
 
-        private BitmapCorePixelFormat2() { }
+        private BitmapCorePixelFormat() { }
 
-        public static readonly BitmapCorePixelFormat2 Indexed1 = new BitmapCorePixelFormat2
+        public static readonly BitmapCorePixelFormat Indexed1 = new BitmapCorePixelFormat
         {
             BitsPerPixel = 1,
         };
 
-        public static readonly BitmapCorePixelFormat2 Indexed2 = new BitmapCorePixelFormat2
+        public static readonly BitmapCorePixelFormat Indexed2 = new BitmapCorePixelFormat
         {
             BitsPerPixel = 2,
         };
 
-        public static readonly BitmapCorePixelFormat2 Indexed4 = new BitmapCorePixelFormat2
+        public static readonly BitmapCorePixelFormat Indexed4 = new BitmapCorePixelFormat
         {
             BitsPerPixel = 4,
         };
 
-        public static readonly BitmapCorePixelFormat2 Indexed8 = new BitmapCorePixelFormat2
+        public static readonly BitmapCorePixelFormat Indexed8 = new BitmapCorePixelFormat
         {
             BitsPerPixel = 8,
         };
 
-        public static readonly BitmapCorePixelFormat2 Bgr555X = new BitmapCorePixelFormat2
+        public static readonly BitmapCorePixelFormat Bgr555X = new BitmapCorePixelFormat
         {
             BitsPerPixel = 16,
             Masks = BitFields.BITFIELDS_BGRA_555X,
@@ -1753,7 +1751,7 @@ namespace BetterBmpLoader
             },
         };
 
-        public static readonly BitmapCorePixelFormat2 Bgr5551 = new BitmapCorePixelFormat2
+        public static readonly BitmapCorePixelFormat Bgr5551 = new BitmapCorePixelFormat
         {
             BitsPerPixel = 16,
             Masks = BitFields.BITFIELDS_BGRA_5551,
@@ -1775,7 +1773,7 @@ namespace BetterBmpLoader
             },
         };
 
-        public static readonly BitmapCorePixelFormat2 Bgr565 = new BitmapCorePixelFormat2
+        public static readonly BitmapCorePixelFormat Bgr565 = new BitmapCorePixelFormat
         {
             BitsPerPixel = 16,
             Masks = BitFields.BITFIELDS_BGR_565,
@@ -1798,7 +1796,7 @@ namespace BetterBmpLoader
             },
         };
 
-        public static readonly BitmapCorePixelFormat2 Rgb24 = new BitmapCorePixelFormat2
+        public static readonly BitmapCorePixelFormat Rgb24 = new BitmapCorePixelFormat
         {
             BitsPerPixel = 24,
             LcmsFormat = Lcms.TYPE_RGB_8,
@@ -1812,7 +1810,7 @@ namespace BetterBmpLoader
             },
         };
 
-        public static readonly BitmapCorePixelFormat2 Bgr24 = new BitmapCorePixelFormat2
+        public static readonly BitmapCorePixelFormat Bgr24 = new BitmapCorePixelFormat
         {
             BitsPerPixel = 24,
             LcmsFormat = Lcms.TYPE_BGR_8,
@@ -1826,7 +1824,7 @@ namespace BetterBmpLoader
             },
         };
 
-        public static readonly BitmapCorePixelFormat2 Bgra32 = new BitmapCorePixelFormat2
+        public static readonly BitmapCorePixelFormat Bgra32 = new BitmapCorePixelFormat
         {
             BitsPerPixel = 32,
             LcmsFormat = Lcms.TYPE_BGRA_8,
@@ -1839,7 +1837,7 @@ namespace BetterBmpLoader
             },
         };
 
-        public static readonly BitmapCorePixelFormat2[] Formats = new BitmapCorePixelFormat2[]
+        public static readonly BitmapCorePixelFormat[] Formats = new BitmapCorePixelFormat[]
         {
             Indexed1,
             Indexed2,
@@ -1870,11 +1868,11 @@ namespace BetterBmpLoader
 
         public override bool Equals(object obj)
         {
-            if (obj is BitmapCorePixelFormat2 fmt) return fmt.Equals(this);
+            if (obj is BitmapCorePixelFormat fmt) return fmt.Equals(this);
             return false;
         }
 
-        public bool Equals(BitmapCorePixelFormat2 other)
+        public bool Equals(BitmapCorePixelFormat other)
         {
             if (other.BitsPerPixel != this.BitsPerPixel)
                 return false;
@@ -1970,7 +1968,7 @@ namespace BetterBmpLoader
     //    //Indexed1,
     //}
 
-    enum BitmapCoreHeaderType
+    internal enum BitmapCoreHeaderType
     {
         BestFit,
         ForceVINFO,
@@ -2001,7 +1999,6 @@ namespace BetterBmpLoader
         }
 
         public uint[] BITFIELDS() => new uint[] { maskRed, maskGreen, maskBlue };
-        //public uint[] GetRGBA() => new uint[] { maskRed, maskGreen, maskBlue, maskAlpha };
 
         public override int GetHashCode()
         {
@@ -2060,7 +2057,7 @@ namespace BetterBmpLoader
         public bool cTrueAlpha;
         public bool cIndexed;
 
-        public BitmapCorePixelFormat2 imgFmt;
+        public BitmapCorePixelFormat imgFmt;
         public RGBQUAD[] imgColorTable;
         public uint imgStride;
         public uint imgDataOffset;

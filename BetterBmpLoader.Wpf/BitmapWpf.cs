@@ -4,36 +4,6 @@ using System.Windows.Media.Imaging;
 
 namespace BetterBmpLoader.Wpf
 {
-
-#if EXPERIMENTAL_CMM
-    public enum CalibrationOptions
-    {
-        /// <summary>
-        /// Any embedded color profile or calibration will be ignored completely.
-        /// </summary>
-        Ignore = 0,
-
-        /// <summary>
-        /// Recommended: If an embedded color profile or calibration is found, we will try first to convert it to sRGB with lcms2.dll. 
-        /// In the event this library can not be found or an error ocurrs, we will attempt to create and return a BitmapFrame with an embedded color profile instead.
-        /// If embedding a WPF color profile also fails, we will return a bitmap without any color profile - equivalent to <see cref="CalibrationOptions.Ignore"/>.
-        /// </summary>
-        TryBestEffort = 1,
-
-        /// <summary>
-        /// Not recommended: Attempts to parse an embedded color profile to a WPF color context. This does not support calibrated bitmaps (calibration will be ignored).
-        /// Also, WPF ignores color profiles when rendering a BitmapSource, so this should only be used if the intention is to immediately encode the returned BitmapFrame
-        /// into another image type, using an encoder such as <see cref="PngBitmapEncoder"/>.
-        /// </summary>
-        PreserveColorProfile = 2,
-
-        /// <summary>
-        /// This will attempt to convert any embedded profile or calibration to sRGB with lcms2.dll, and will throw if an error occurs.
-        /// </summary>
-        FlattenTo_sRGB = 3,
-    }
-#endif
-
     [Flags]
     public enum BitmapWpfReaderFlags
     {
@@ -65,38 +35,36 @@ namespace BetterBmpLoader.Wpf
     [Flags]
     public enum BitmapWpfWriterFlags
     {
+        /// <summary>
+        /// No special writer flags
+        /// </summary>
         None = 0,
+
+        /// <summary>
+        /// This specifies that the bitmap must be created with a BITMAPV5HEADER. This is desirable if storing the image to the cliboard at CF_DIBV5 for example.
+        /// </summary>
         ForceV5Header = 1,
+
+        /// <summary>
+        /// This specifies that the bitmap must be created with a BITMAPINFOHEADER. This is required when storing the image to the clipboard at CF_DIB, or possibly
+        /// for interoping with other applications that do not support newer bitmap files. This option is not advisable unless absolutely required - as not all bitmaps
+        /// can be accurately represented. For example, no transparency data can be stored - and the images will appear fully opaque.
+        /// </summary>
         ForceInfoHeader = 2,
+
+        /// <summary>
+        /// This option requests that the bitmap be created without a BITMAPFILEHEADER (ie, in Packed DIB format). This is used when storing the file to the clipboard.
+        /// </summary>
         OmitFileHeader = 4,
     }
 
     /// <summary>
-    /// Provides a WPF implementation of BetterBmpLoaded Bitmap parser and writer. This bitmap library can read almost any kind of bitmap and 
-    /// tries to do a better job than WPF does in terms of coverage and it also tries to handle some nuances of how other native applications write bitmaps.
+    /// Provides a WPF implementation of BetterBmpLoaded Bitmap reader and writer. This bitmap library can read almost any kind of bitmap and 
+    /// tries to do a better job than WPF does in terms of coverage and it also tries to handle some nuances of how other native applications write bitmaps, 
+    /// especially when reading from or writing to the clipboard.
     /// </summary>
     public sealed class BitmapWpf
     {
-
-#if EXPERIMENTAL_CMM
-        public static BitmapFrame Read(Stream stream) => Read(stream, CalibrationOptions.Ignore);
-
-        public static BitmapFrame Read(Stream stream, CalibrationOptions colorOptions) => Read(stream, colorOptions, BitmapWpfParserFlags.None);
-
-        public static BitmapFrame Read(Stream stream, CalibrationOptions colorOptions, BitmapWpfParserFlags pFlags) => Read(StructUtil.ReadBytes(stream), colorOptions, pFlags);
-
-        public static BitmapFrame Read(byte[] data) => Read(data, CalibrationOptions.Ignore);
-
-        public static BitmapFrame Read(byte[] data, CalibrationOptions colorOptions) => Read(data, colorOptions, BitmapWpfParserFlags.None);
-
-        public unsafe static BitmapFrame Read(byte[] data, CalibrationOptions colorOptions, BitmapWpfParserFlags pFlags)
-        {
-            fixed (byte* ptr = data)
-                return Read(ptr, data.Length, colorOptions, pFlags);
-        }
-
-        public unsafe static BitmapFrame Read(byte* data, int dataLength, CalibrationOptions colorOptions, BitmapWpfParserFlags pFlags)
-#else
         public static BitmapFrame Read(Stream stream) => Read(StructUtil.ReadBytes(stream));
 
         public static BitmapFrame Read(Stream stream, BitmapWpfReaderFlags pFlags) => Read(StructUtil.ReadBytes(stream), pFlags);
@@ -110,7 +78,6 @@ namespace BetterBmpLoader.Wpf
         }
 
         public unsafe static BitmapFrame Read(byte* data, int dataLength, BitmapWpfReaderFlags pFlags)
-#endif
         {
             BITMAP_READ_DETAILS info;
             BitmapCore.ReadHeader(data, dataLength, out info);

@@ -7,32 +7,6 @@ using System.Runtime.InteropServices;
 
 namespace BetterBmpLoader.Gdi
 {
-#if EXPERIMENTAL_CMM
-
-    public enum CalibrationOptions
-    {
-        /// <summary>
-        /// Any embedded color profile or calibration will be ignored completely.
-        /// </summary>
-        Ignore = 0,
-
-        /// <summary>
-        /// Recommended: If an embedded color profile or calibration is found, we will try first to convert it to sRGB with lcms2.dll. 
-        /// In the event this library can not be found or an error ocurrs, we will attempt to create and return a BitmapFrame with an embedded color profile instead.
-        /// If embedding a WPF color profile also fails, we will return a bitmap without any color profile - equivalent to <see cref="CalibrationOptions.Ignore"/>.
-        /// </summary>
-        TryBestEffort = 1,
-
-        // Not available for GDI
-        // PreserveColorProfile = 2,
-
-        /// <summary>
-        /// This will attempt to convert any embedded profile or calibration to sRGB with lcms2.dll, and will throw if an error occurs.
-        /// </summary>
-        FlattenTo_sRGB = 3,
-    }
-#endif
-
     [Flags]
     public enum BitmapGdiReaderFlags
     {
@@ -63,12 +37,34 @@ namespace BetterBmpLoader.Gdi
     [Flags]
     public enum BitmapGdiWriterFlags
     {
+        /// <summary>
+        /// No special writer flags
+        /// </summary>
         None = 0,
+
+        /// <summary>
+        /// This specifies that the bitmap must be created with a BITMAPV5HEADER. This is desirable if storing the image to the cliboard at CF_DIBV5 for example.
+        /// </summary>
         ForceV5Header = 1,
+
+        /// <summary>
+        /// This specifies that the bitmap must be created with a BITMAPINFOHEADER. This is required when storing the image to the clipboard at CF_DIB, or possibly
+        /// for interoping with other applications that do not support newer bitmap files. This option is not advisable unless absolutely required - as not all bitmaps
+        /// can be accurately represented. For example, no transparency data can be stored - and the images will appear fully opaque.
+        /// </summary>
         ForceInfoHeader = 2,
+
+        /// <summary>
+        /// This option requests that the bitmap be created without a BITMAPFILEHEADER (ie, in Packed DIB format). This is used when storing the file to the clipboard.
+        /// </summary>
         OmitFileHeader = 4,
     }
 
+    /// <summary>
+    /// Provides a Gdi+ implementation of BetterBmpLoaded Bitmap reader and writer. This bitmap library can read almost any kind of bitmap and 
+    /// tries to do a better job than Gdi+ does in terms of coverage and it also tries to handle some nuances of how other native applications write bitmaps especially when
+    /// reading from or writing to the clipboard.
+    /// </summary>
     public class BitmapGdi
     {
         public static Bitmap Read(Stream stream) => Read(StructUtil.ReadBytes(stream));
@@ -103,7 +99,7 @@ namespace BetterBmpLoader.Gdi
 
             // defaults
             PixelFormat gdiFmt = PixelFormat.Format32bppArgb;
-            BitmapCorePixelFormat2 coreFmt = BitmapCorePixelFormat2.Bgra32;
+            BitmapCorePixelFormat coreFmt = BitmapCorePixelFormat.Bgra32;
 
             if (!formatbgra32)
             {
@@ -111,10 +107,10 @@ namespace BetterBmpLoader.Gdi
                 var origFmt = info.imgFmt;
                 if (origFmt != null)
                 {
-                    if (origFmt == BitmapCorePixelFormat2.Rgb24)
+                    if (origFmt == BitmapCorePixelFormat.Rgb24)
                     {
                         // we need BitmapCore to reverse the pixel order for GDI
-                        coreFmt = BitmapCorePixelFormat2.Bgr24;
+                        coreFmt = BitmapCorePixelFormat.Bgr24;
                         gdiFmt = PixelFormat.Format24bppRgb;
                     }
                     else
@@ -165,7 +161,7 @@ namespace BetterBmpLoader.Gdi
 
             // default - this will cause GDI to convert the pixel format to bgra32 if we don't know the format directly
             var gdiFmt = PixelFormat.Format32bppArgb;
-            var coreFmt = BitmapCorePixelFormat2.Bgra32;
+            var coreFmt = BitmapCorePixelFormat.Bgra32;
 
             var pxarr = Formats.Where(f => f.gdiFmt == bitmap.PixelFormat).ToArray();
             if (pxarr.Length > 0)
@@ -183,9 +179,6 @@ namespace BetterBmpLoader.Gdi
 
             var dlock = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, gdiFmt);
             var buf = (byte*)dlock.Scan0;
-
-            //int stride = (coreFmt.BitsPerPixel * bitmap.Width + 31) / 32 * 4;
-            //byte[] buffer = new byte[stride * bitmap.Height];
 
             BITMAP_WRITE_REQUEST req = new BITMAP_WRITE_REQUEST
             {
@@ -210,60 +203,25 @@ namespace BetterBmpLoader.Gdi
         private struct PxMap
         {
             public PixelFormat gdiFmt;
-            public BitmapCorePixelFormat2 coreFmt;
-            //public ushort bbp;
-            //public BITMASKS masks;
+            public BitmapCorePixelFormat coreFmt;
 
-            public PxMap(PixelFormat gdi, BitmapCorePixelFormat2 core)
+            public PxMap(PixelFormat gdi, BitmapCorePixelFormat core)
             {
                 gdiFmt = gdi;
                 coreFmt = core;
-                //bpp = bits;
-                //masks = mks;
             }
-        }
-
-        [StructLayout(LayoutKind.Sequential, Pack = 0)]
-        private struct LOGPALETTE0
-        {
-            public ushort palVersion;
-            public ushort palNumEntries;
         }
 
         private static PxMap[] Formats = new PxMap[]
         {
-            new PxMap(PixelFormat.Format32bppArgb, BitmapCorePixelFormat2.Bgra32),
-            new PxMap(PixelFormat.Format24bppRgb, BitmapCorePixelFormat2.Bgr24),
-            new PxMap(PixelFormat.Format16bppArgb1555, BitmapCorePixelFormat2.Bgr5551),
-            new PxMap(PixelFormat.Format16bppRgb555, BitmapCorePixelFormat2.Bgr555X),
-            new PxMap(PixelFormat.Format16bppRgb565, BitmapCorePixelFormat2.Bgr565),
-            new PxMap(PixelFormat.Format8bppIndexed, BitmapCorePixelFormat2.Indexed8),
-            new PxMap(PixelFormat.Format4bppIndexed, BitmapCorePixelFormat2.Indexed4),
-            new PxMap(PixelFormat.Format1bppIndexed, BitmapCorePixelFormat2.Indexed1),
-
-            ////new PxMap(PixelFormat.Undefined, null, 0, new BITMASKS(0,0,0,0)),
-            ////new PxMap(PixelFormat.DontCare, null, 0, new BITMASKS(0,0,0,0)),
-            ////new PxMap(PixelFormat.Max, null, 0, new BITMASKS(0,0,0,0)),
-            ////new PxMap(PixelFormat.Indexed, null, 0, new BITMASKS(0,0,0,0)),
-            ////new PxMap(PixelFormat.Gdi, null, 0, new BITMASKS(0,0,0,0)),
-            //new PxMap(PixelFormat.Format16bppRgb555, BitmapCorePixelFormat2.Bgr555X, 16, new BITMASKS(0,0,0,0)),
-            //new PxMap(PixelFormat.Format16bppRgb565, BitmapCorePixelFormat2.Bgr565, 0, new BITMASKS(0,0,0,0)),
-            //new PxMap(PixelFormat.Format24bppRgb, null, 0, new BITMASKS(0,0,0,0)),
-            //new PxMap(PixelFormat.Format32bppRgb, null, 0, new BITMASKS(0,0,0,0)),
-            //new PxMap(PixelFormat.Format1bppIndexed, null, 0, new BITMASKS(0,0,0,0)),
-            //new PxMap(PixelFormat.Format4bppIndexed, null, 0, new BITMASKS(0,0,0,0)),
-            //new PxMap(PixelFormat.Format8bppIndexed, null, 0, new BITMASKS(0,0,0,0)),
-            ////new PxMap(PixelFormat.Alpha, null, 0, new BITMASKS(0,0,0,0)),
-            //new PxMap(PixelFormat.Format16bppArgb1555, null, 0, new BITMASKS(0,0,0,0)),
-            ////new PxMap(PixelFormat.PAlpha, null, 0, new BITMASKS(0,0,0,0)),
-            //new PxMap(PixelFormat.Format32bppPArgb, null, 0, new BITMASKS(0,0,0,0)),
-            ////new PxMap(PixelFormat.Extended, null, 0, new BITMASKS(0,0,0,0)),
-            ////new PxMap(PixelFormat.Format16bppGrayScale, null, 0, new BITMASKS(0,0,0,0)),
-            ////new PxMap(PixelFormat.Format48bppRgb, null, 0, new BITMASKS(0,0,0,0)),
-            ////new PxMap(PixelFormat.Format64bppPArgb, null, 0, new BITMASKS(0,0,0,0)),
-            ////new PxMap(PixelFormat.Canonical, null, 0, new BITMASKS(0,0,0,0)),
-            //new PxMap(PixelFormat.Format32bppArgb, null, 0, new BITMASKS(0,0,0,0)),
-            ////new PxMap(PixelFormat.Format64bppArgb, null, 0, new BITMASKS(0,0,0,0)),
+            new PxMap(PixelFormat.Format32bppArgb, BitmapCorePixelFormat.Bgra32),
+            new PxMap(PixelFormat.Format24bppRgb, BitmapCorePixelFormat.Bgr24),
+            new PxMap(PixelFormat.Format16bppArgb1555, BitmapCorePixelFormat.Bgr5551),
+            new PxMap(PixelFormat.Format16bppRgb555, BitmapCorePixelFormat.Bgr555X),
+            new PxMap(PixelFormat.Format16bppRgb565, BitmapCorePixelFormat.Bgr565),
+            new PxMap(PixelFormat.Format8bppIndexed, BitmapCorePixelFormat.Indexed8),
+            new PxMap(PixelFormat.Format4bppIndexed, BitmapCorePixelFormat.Indexed4),
+            new PxMap(PixelFormat.Format1bppIndexed, BitmapCorePixelFormat.Indexed1),
         };
     }
 }
