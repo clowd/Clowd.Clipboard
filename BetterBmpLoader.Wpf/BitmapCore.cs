@@ -203,17 +203,13 @@ namespace BetterBmpLoader
 
             ushort nbits = bi.bV5BitCount;
 
-            //if (nbits != 32 && nbits != 24 &&  && nbits != 16)
-            //    throw new NotSupportedException($"Bitmaps with bpp of '{nbits}' are not supported. Expected 16, 24, or 32.");
-
             //if (bi.bV5Planes != 1)
             //    throw new NotSupportedException($"Bitmap bV5Planes of '{bi.bV5Planes}' is not supported.");
 
             // we don't support linked profiles, custom windows profiles, etc - so default to sRGB instead of throwing...
-            bi.bV5CSType = bi.bV5CSType == ColorSpaceType.PROFILE_EMBEDDED ? ColorSpaceType.PROFILE_EMBEDDED : ColorSpaceType.LCS_sRGB;
 
-            //if (bi.bV5CSType != ColorSpaceType.LCS_sRGB && bi.bV5CSType != ColorSpaceType.LCS_WINDOWS_COLOR_SPACE && bi.bV5CSType != ColorSpaceType.PROFILE_EMBEDDED && bi.bV5CSType != ColorSpaceType.LCS_CALIBRATED_RGB)
-            //    throw new NotSupportedException($"Bitmap with header size '{header_size}' and color space of '{bi.bV5CSType.ToString()}' is not supported.");
+            if (bi.bV5CSType != ColorSpaceType.LCS_CALIBRATED_RGB && bi.bV5CSType != ColorSpaceType.PROFILE_EMBEDDED)
+                bi.bV5CSType = ColorSpaceType.LCS_sRGB;
 
             uint maskR = 0;
             uint maskG = 0;
@@ -330,8 +326,8 @@ namespace BetterBmpLoader
                 if (!lgBit && !smBit)
                     throw new NotSupportedException($"Bitmap with bits per pixel of '{nbits}' are not valid.");
 
-                //if (lgBit && (maskR == 0 || maskB == 0 || maskG == 0))
-                //    throw new NotSupportedException($"Bitmap (bbp {nbits}) color masks could not be determined, this usually indicates a malformed bitmap file.");
+                if (lgBit && maskR == 0 && maskB == 0 && maskG == 0)
+                    throw new NotSupportedException($"Bitmap (bbp {nbits}) color masks could not be determined, this usually indicates a malformed bitmap file.");
             }
 
             // The number of entries in the palette is either 2n (where n is the number of bits per pixel) or a smaller number specified in the header
@@ -1615,79 +1611,6 @@ namespace BetterBmpLoader
         public static readonly BITMASKS BITFIELDS_BGRA_555X = new BITMASKS(0x7c00, 0x03e0, 0x001f);
     }
 
-    //internal class BitFields
-    //{
-    //public static readonly uint[] BITFIELDS_RGB_24 = new uint[] { 0xff, 0xff00, 0xff0000 };
-    //public static readonly uint[] BITFIELDS_BGR_24 = new uint[] { 0xff0000, 0xff00, 0xff };
-    //public static readonly uint[] BITFIELDS_BGRA_32 = new uint[] { 0xff0000, 0xff00, 0xff, 0xff000000 };
-    ////private static readonly uint[] BITFIELDS_BGR_32 = new uint[] { 0xff0000, 0xff00, 0xff };
-    //public static readonly uint[] BITFIELDS_BGR_565 = new uint[] { 0xf800, 0x7e0, 0x1f };
-    //public static readonly uint[] BITFIELDS_BGRA_5551 = new uint[] { 0x7c00, 0x03e0, 0x001f, 0x8000 };
-    //public static readonly uint[] BITFIELDS_BGRA_555X = new uint[] { 0x7c00, 0x03e0, 0x001f };
-    //}
-
-    //internal enum BitmapCorePixelFormat
-    //{
-    //    // Unsupported WPF formats
-    //    //Rgba128Float,
-    //    //Gray32Float,
-    //    //Gray16,
-    //    //Prgba64,
-    //    //Rgba64,
-    //    //Rgb48,
-    //    //Rgb128Float,
-    //    //Gray8,
-    //    //Gray4,
-    //    //Gray2,
-    //    //BlackWhite,
-    //    //Prgba128Float,
-    //    //Cmyk32,
-
-    //    // Unsupported GDI formats
-    //    //Undefined,
-    //    //DontCare,
-    //    //Indexed,
-    //    //Gdi,
-    //    //Alpha,
-    //    //PAlpha,
-    //    //Extended,
-    //    //Format16bppGrayScale,
-    //    //Canonical,
-    //    //Format64bppArgb,
-    //    //Format16bppRgb555,
-    //    //Format16bppRgb565,
-    //    //Format24bppRgb,
-    //    //Format32bppRgb,
-    //    //Format1bppIndexed,
-    //    //Format4bppIndexed,
-    //    //Format8bppIndexed,
-    //    //Format16bppArgb1555,
-    //    //Format32bppPArgb,
-    //    //Format64bppPArgb,
-    //    //Format32bppArgb,
-    //    //Unknown,
-    //    //Rgb24,
-    //    //Pbgra32,
-    //    Bgra32,
-    //    Bgr32,
-    //    //Bgr101010,
-    //    //Bgr24,
-    //    //Bgr565,
-    //    //Bgr555,
-    //    //Bgra5551,
-    //    //Indexed8,
-    //    //Indexed4,
-    //    //Indexed2,
-    //    //Indexed1,
-    //}
-
-    internal enum BitmapCoreHeaderType
-    {
-        BestFit,
-        ForceVINFO,
-        ForceV5,
-    }
-
     internal struct BITMASKS
     {
         public uint maskRed;
@@ -1743,11 +1666,6 @@ namespace BetterBmpLoader
 
     internal struct BITMAP_WRITE_REQUEST
     {
-        //public bool headerIncludeFile;
-        //public BitmapCoreHeaderType headerType;
-        //public byte[] iccProfileData;
-        //public bool iccEmbed;
-
         public double dpiX;
         public double dpiY;
 
@@ -1779,9 +1697,6 @@ namespace BetterBmpLoader
         public int imgWidth;
         public int imgHeight;
 
-        //public uint iccProfileOffset;
-        //public uint iccProfileSize;
-        //public ColorSpaceType iccProfileType;
         public mscms.SafeProfileHandle colorProfile;
         public mscms.mscmsIntent colorProfileIntent;
     }
@@ -1820,13 +1735,6 @@ namespace BetterBmpLoader
         OS2_RLE24 = 98,
         OS2_HUFFMAN1D = 99,
     }
-
-    //internal struct CIEXYZd
-    //{
-    //    public double ciexyzX;
-    //    public double ciexyzY;
-    //    public double ciexyzZ;
-    //}
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct BITMAPCOREHEADER // OS21BITMAPHEADER
@@ -1867,7 +1775,6 @@ namespace BetterBmpLoader
     [StructLayout(LayoutKind.Sequential)]
     internal struct BITMAPINFOHEADER
     {
-        // BITMAPINFOHEADER SIZE = 40
         public uint bV5Size; // uint
         public int bV5Width;
         public int bV5Height; // LONG
@@ -2400,10 +2307,6 @@ namespace BetterBmpLoader
         private const string libmscms = "mscms";
 
         //private const uint LCS_SIGNATURE = 0x50534f43;
-        //private const UInt32 INTENT_PERCEPTUAL = 0;
-        //private const UInt32 INTENT_RELATIVE_COLORIMETRIC = 1;
-        //private const UInt32 INTENT_SATURATION = 2;
-        //private const UInt32 INTENT_ABSOLUTE_COLORIMETRIC = 3;
         //private const UInt32 PROOF_MODE = 0x00000001;
         //private const UInt32 NORMAL_MODE = 0x00000002;
         private const UInt32 BEST_MODE = 0x00000003;
