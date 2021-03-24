@@ -29,9 +29,9 @@ byte[] imageBytes2 = BitmapWpf.GetBytes(bitmap);
 
 ### Compatibility
 
-:heavy_check_mark: Files with or without a `BITMAPFILEHEADER`
-:heavy_check_mark: Files with any known BMP header format, including WindowsV1, V2, V3, V4, V5, OS2v1, OS2v2
-:heavy_check_mark: Files with logical color space / calibration data
-:heavy_check_mark: Files with embedded ICC color formats
-:heavy_check_mark: Files with any valid compression format, including RGB, BITFIELDS, ALPHABITFIELDS, JPEG, PNG, HUFFMAN1D (G31D), RLE4/8/24
-:heavy_check_mark: Files with completely non-standard pixel layout (for example, 32bpp with the following layout: 7B-25G-0R-0A)
+ - :heavy_check_mark: Files with or without a `BITMAPFILEHEADER`
+ - :heavy_check_mark: Files with any known BMP header format, including WindowsV1, V2, V3, V4, V5, OS2v1, OS2v2
+ - :heavy_check_mark: Files with logical color space / calibration data
+ - :heavy_check_mark: Files with embedded ICC color formats
+ - :heavy_check_mark: Files with any valid compression format, including RGB, BITFIELDS, ALPHABITFIELDS, JPEG, PNG, HUFFMAN1D (G31D), RLE4/8/24
+ - :heavy_check_mark: Files with completely non-standard pixel layout (for example, 32bpp with the following layout: 7B-25G-0R-0A)
