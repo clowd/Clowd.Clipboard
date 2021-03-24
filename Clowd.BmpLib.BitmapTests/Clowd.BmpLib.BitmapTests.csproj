@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{BB566490-89AC-4710-B6E1-F37E01B11A9D}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>BetterBmpLoader.BitmapTests</RootNamespace>
-    <AssemblyName>BetterBmpLoader.BitmapTests</AssemblyName>
+    <RootNamespace>Clowd.BmpLib.BitmapTests</RootNamespace>
+    <AssemblyName>Clowd.BmpLib.BitmapTests</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -329,13 +329,13 @@
     <Content Include="lcms2-x86.dll" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BetterBmpLoader.Gdi\BetterBmpLoader.Gdi.csproj">
-      <Project>{5e33b97e-c546-482f-b17c-7aa7337929aa}</Project>
-      <Name>BetterBmpLoader.Gdi</Name>
+    <ProjectReference Include="..\Clowd.BmpLib.Gdi\Clowd.BmpLib.Gdi.csproj">
+      <Project>{5E33B97E-C546-482F-B17C-7AA7337929AA}</Project>
+      <Name>Clowd.BmpLib.Gdi</Name>
     </ProjectReference>
-    <ProjectReference Include="..\BetterBmpLoader.Wpf\BetterBmpLoader.Wpf.csproj">
-      <Project>{48445023-227a-4369-a7e6-64aabc099beb}</Project>
-      <Name>BetterBmpLoader.Wpf</Name>
+    <ProjectReference Include="..\Clowd.BmpLib.Wpf\Clowd.BmpLib.Wpf.csproj">
+      <Project>{48445023-227A-4369-A7E6-64AABC099BEB}</Project>
+      <Name>Clowd.BmpLib.Wpf</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace BetterBmpLoader
+namespace Clowd.BmpLib
 {
     // http://zig.tgschultz.com/bmp_file_format.txt
     // http://paulbourke.net/dataformats/bitmaps/
@@ -2624,70 +2624,6 @@ namespace BetterBmpLoader
             COLOR_8_CHANNEL,        //      - do -
             COLOR_NAMED,
         }
-
-        //[StructLayout(LayoutKind.Explicit)]
-        //struct COLOR
-        //{
-        //    [FieldOffset(0)]
-        //    public ushort rgb_red;
-
-        //    [FieldOffset(2)]
-        //    public ushort rgb_green;
-
-        //    [FieldOffset(4)]
-        //    public ushort rgb_blue;
-
-        //    [FieldOffset(0)]
-        //    public IntPtr reserved;
-
-        //    //[FieldOffset(0)]
-        //    //public IntPtr reserved;
-        //}
-
-        //[StructLayout(LayoutKind.Sequential)]
-        //unsafe struct COLOR
-        //{
-        //    public ushort gray;
-
-        //    public ushort rgb_red;
-        //    public ushort rgb_green;
-        //    public ushort rgb_blue;
-
-        //    public ushort cmyk_cyan;
-        //    public ushort cmyk_magenta;
-        //    public ushort cmyk_yellow;
-        //    public ushort cmyk_black;
-
-        //    public ushort xyz_X;
-        //    public ushort xyz_Y;
-        //    public ushort xyz_Z;
-
-        //    public ushort yxy_Y;
-        //    public ushort yxy_x;
-        //    public ushort yxy_y;
-
-        //    public ushort Lab_L;
-        //    public ushort Lab_a;
-        //    public ushort Lab_b;
-
-        //    public ushort generic3_ch1;
-        //    public ushort generic3_ch2;
-        //    public ushort generic3_ch3;
-
-        //    public uint namedColorIndex;
-
-        //    public byte hifi_ch1;
-        //    public byte hifi_ch2;
-        //    public byte hifi_ch3;
-        //    public byte hifi_ch4;
-        //    public byte hifi_ch5;
-        //    public byte hifi_ch6;
-        //    public byte hifi_ch7;
-        //    public byte hifi_ch8;
-
-        //    public uint reserved1;
-        //    public void* reserved2;
-        //}
 
         public enum mscmsIntent : uint
         {

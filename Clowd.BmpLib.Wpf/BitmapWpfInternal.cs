@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace BetterBmpLoader
+namespace Clowd.BmpLib
 {
     // this class exists separately so it can be included as a submodule/file in ClipboardGapWpf and not create conflicts upstream - rather than including as a project.
     internal class BitmapWpfInternal

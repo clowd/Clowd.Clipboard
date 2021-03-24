@@ -2,7 +2,7 @@
 using System.IO;
 using System.Windows.Media.Imaging;
 
-namespace BetterBmpLoader.Wpf
+namespace Clowd.BmpLib.Wpf
 {
     [Flags]
     public enum BitmapWpfReaderFlags : uint

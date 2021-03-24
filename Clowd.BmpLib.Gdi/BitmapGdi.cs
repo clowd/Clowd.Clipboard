@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 
-namespace BetterBmpLoader.Gdi
+namespace Clowd.BmpLib.Gdi
 {
     [Flags]
     public enum BitmapGdiReaderFlags : uint

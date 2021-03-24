@@ -1,16 +1,13 @@
-﻿using BetterBmpLoader.Gdi;
-using BetterBmpLoader.Wpf;
+﻿using Clowd.BmpLib.Gdi;
+using Clowd.BmpLib.Wpf;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
-namespace BetterBmpLoader.BitmapTests
+namespace Clowd.BmpLib.BitmapTests
 {
     class Program
     {
@@ -19,15 +16,6 @@ namespace BetterBmpLoader.BitmapTests
 
         static unsafe void Main(string[] args)
         {
-            //var asde = IntPtr.Size;
-            //mscms.SafeProfileHandle prof;
-            //var profFile = File.ReadAllBytes("bitmaps\\rgb24prof2.bmp");
-            //fixed (byte* profPtr = profFile)
-            //{
-            //    BitmapCore.ReadHeader(profPtr, profFile.Length, out var info);
-            //    prof = info.colorProfile;
-            //}
-
             if (Directory.Exists(outputDir)) Directory.Delete(outputDir, true);
             Directory.CreateDirectory(outputDir);
 
@@ -55,7 +43,6 @@ namespace BetterBmpLoader.BitmapTests
 
             File.AppendAllText(htmlPage, "</table></body></html>");
             Process.Start("render.html");
-            //Console.Read();
         }
 
         static void WriteTableLine(string file)
@@ -97,11 +84,7 @@ namespace BetterBmpLoader.BitmapTests
                 string suffix = "_gdi";
                 var roundPath = Path.Combine(outputDir, name + suffix + ".bmp");
                 var bmp = BitmapGdi.Read(originalBytes, BitmapGdiReaderFlags.PreserveInvalidAlphaChannel);
-                File.WriteAllBytes(roundPath, BitmapGdi.GetBytes(bmp, BitmapGdiWriterFlags.None)); // not yet supported
-
-                //error += bmp.PixelFormat.ToString();
-                //bmp.Save(roundPath, ImageFormat.Bmp);
-                //var bmp2 = BitmapGdi.Read(File.ReadAllBytes(roundPath));
+                File.WriteAllBytes(roundPath, BitmapGdi.GetBytes(bmp, BitmapGdiWriterFlags.None));
 
                 var pngPath = Path.Combine(outputDir, name + suffix + ".png");
                 bmp.Save(pngPath, ImageFormat.Png);
