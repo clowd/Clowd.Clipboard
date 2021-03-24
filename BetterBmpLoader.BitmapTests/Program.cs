@@ -46,6 +46,8 @@ namespace BetterBmpLoader.BitmapTests
                 WriteTableLine(file);
             }
 
+            File.AppendAllText(htmlPage, "</table><br/><br/><span>Known bad images are below. We are testing these to make sure we do not cause any fatal memory violations</span><br/><br/><table>");
+
             foreach (var file in Directory.EnumerateFiles("known_bad", "*.bmp", SearchOption.TopDirectoryOnly).OrderBy(k => k))
             {
                 WriteTableLine(file);
@@ -76,7 +78,7 @@ namespace BetterBmpLoader.BitmapTests
 
                 var pngPath = Path.Combine(outputDir, name + suffix + ".png");
                 var pngEncoder = new PngBitmapEncoder();
-                pngEncoder.Frames.Add(bmp);
+                pngEncoder.Frames.Add(BitmapFrame.Create(bmp));
                 var ms = new MemoryStream();
                 pngEncoder.Save(ms);
                 File.WriteAllBytes(pngPath, ms.ToArray());

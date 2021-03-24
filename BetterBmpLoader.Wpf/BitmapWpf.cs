@@ -18,18 +18,23 @@ namespace BetterBmpLoader.Wpf
         /// Sometimes, these bits are not zero, and with this flag set, we will use heuristics to determine if that unused channel contains 
         /// transparency data, and if so, parse it as such.
         /// </summary>
-        PreserveInvalidAlphaChannel = 1,
+        PreserveInvalidAlphaChannel = BitmapCore.BC_READ_PRESERVE_INVALID_ALPHA,
 
         /// <summary>
-        /// Will cause an exeption if the original pixel format can not be preserved. This could be the case if either WPF or BitmapCore does not 
-        /// support this format natively.
+        /// Will cause an exeption if the original pixel format can not be preserved. This could be the case if BitmapCore or the target framework 
+        /// does not support this format natively.
         /// </summary>
-        StrictPreserveOriginalFormat = 2,
+        StrictPreserveOriginalFormat = BitmapCore.BC_READ_STRICT_PRESERVE_FORMAT,
 
         /// <summary>
         /// Will force the bitmap pixel data to be converted to BGRA32 no matter what the source format is. Not valid if combined with <see cref="StrictPreserveOriginalFormat"/>.
         /// </summary>
-        ConvertToBGRA32 = 4
+        ForceFormatBGRA32 = BitmapCore.BC_READ_FORCE_BGRA32,
+
+        /// <summary>
+        /// Skips and ignores any embedded calibration or ICC profile data.
+        /// </summary>
+        IgnoreColorProfile = BitmapCore.BC_READ_IGNORE_COLOR_PROFILE,
     }
 
     [Flags]
@@ -43,19 +48,19 @@ namespace BetterBmpLoader.Wpf
         /// <summary>
         /// This specifies that the bitmap must be created with a BITMAPV5HEADER. This is desirable if storing the image to the cliboard at CF_DIBV5 for example.
         /// </summary>
-        ForceV5Header = 1,
+        ForceV5Header = BitmapCore.BC_WRITE_V5,
 
         /// <summary>
         /// This specifies that the bitmap must be created with a BITMAPINFOHEADER. This is required when storing the image to the clipboard at CF_DIB, or possibly
         /// for interoping with other applications that do not support newer bitmap files. This option is not advisable unless absolutely required - as not all bitmaps
         /// can be accurately represented. For example, no transparency data can be stored - and the images will appear fully opaque.
         /// </summary>
-        ForceInfoHeader = 2,
+        ForceInfoHeader = BitmapCore.BC_WRITE_VINFO,
 
         /// <summary>
         /// This option requests that the bitmap be created without a BITMAPFILEHEADER (ie, in Packed DIB format). This is used when storing the file to the clipboard.
         /// </summary>
-        OmitFileHeader = 4,
+        SkipFileHeader = BitmapCore.BC_WRITE_SKIP_FH,
     }
 
     /// <summary>
@@ -65,40 +70,31 @@ namespace BetterBmpLoader.Wpf
     /// </summary>
     public sealed class BitmapWpf
     {
-        public static BitmapFrame Read(Stream stream) => Read(StructUtil.ReadBytes(stream));
+        public static BitmapSource Read(Stream stream) => Read(StructUtil.ReadBytes(stream));
 
-        public static BitmapFrame Read(Stream stream, BitmapWpfReaderFlags pFlags) => Read(StructUtil.ReadBytes(stream), pFlags);
+        public static BitmapSource Read(Stream stream, BitmapWpfReaderFlags pFlags) => Read(StructUtil.ReadBytes(stream), pFlags);
 
-        public static BitmapFrame Read(byte[] data) => Read(data, BitmapWpfReaderFlags.None);
+        public static BitmapSource Read(byte[] data) => Read(data, BitmapWpfReaderFlags.None);
 
-        public unsafe static BitmapFrame Read(byte[] data, BitmapWpfReaderFlags pFlags)
+        public unsafe static BitmapSource Read(byte[] data, BitmapWpfReaderFlags rFlags)
         {
             fixed (byte* ptr = data)
-                return Read(ptr, data.Length, pFlags);
+                return Read(ptr, data.Length, rFlags);
         }
 
-        public unsafe static BitmapFrame Read(byte* data, int dataLength, BitmapWpfReaderFlags pFlags)
+        public unsafe static BitmapSource Read(byte* data, int dataLength, BitmapWpfReaderFlags rFlags)
         {
             BITMAP_READ_DETAILS info;
-            BitmapCore.ReadHeader(data, dataLength, out info);
-            var preserveAlpha = (pFlags & BitmapWpfReaderFlags.PreserveInvalidAlphaChannel) > 0;
-            var preserveFormat = (pFlags & BitmapWpfReaderFlags.StrictPreserveOriginalFormat) > 0;
-            var bgra32 = (pFlags & BitmapWpfReaderFlags.ConvertToBGRA32) > 0;
-
-            if (preserveFormat && bgra32)
-                throw new ArgumentException("Both ConvertToBGRA32 and StrictPreserveOriginalFormat options were set. These are incompatible options.");
-
-            return BitmapWpfInternal.Read(ref info, data, dataLength, preserveAlpha, preserveFormat, bgra32);
+            uint bcrFlags = (uint)rFlags;
+            BitmapCore.ReadHeader(data, dataLength, out info, bcrFlags);
+            return BitmapWpfInternal.Read(ref info, data + info.imgDataOffset, bcrFlags);
         }
 
-        public static byte[] GetBytes(BitmapFrame bitmap) => GetBytes(bitmap, BitmapWpfWriterFlags.None);
+        public static byte[] GetBytes(BitmapSource bitmap) => GetBytes(bitmap, BitmapWpfWriterFlags.None);
 
-        public static byte[] GetBytes(BitmapFrame bitmap, BitmapWpfWriterFlags wFlags)
+        public static byte[] GetBytes(BitmapSource bitmap, BitmapWpfWriterFlags wFlags)
         {
-            var forceV5 = (wFlags & BitmapWpfWriterFlags.ForceV5Header) > 0;
-            var forceInfo = (wFlags & BitmapWpfWriterFlags.ForceInfoHeader) > 0;
-            var omitFileHeader = (wFlags & BitmapWpfWriterFlags.OmitFileHeader) > 0;
-            return BitmapWpfInternal.GetBytes(bitmap, !omitFileHeader, forceV5, forceInfo);
+            return BitmapWpfInternal.GetBytes(bitmap, (uint)wFlags);
         }
     }
 }

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -13,10 +12,8 @@ namespace BetterBmpLoader
     // this class exists separately so it can be included as a submodule/file in ClipboardGapWpf and not create conflicts upstream - rather than including as a project.
     internal class BitmapWpfInternal
     {
-        public unsafe static BitmapFrame Read(ref BITMAP_READ_DETAILS info, byte* data, int dataLength, bool preserveAlpha, bool strictPreserveFormat, bool forceBgra32)
+        public unsafe static BitmapSource Read(ref BITMAP_READ_DETAILS info, byte* pixels, uint bcrFlags)
         {
-            byte* pixels = data + info.imgDataOffset;
-
             // we do this parsing here since BitmapCore has no references to PresentationCore
             if (info.compression == BitmapCompressionMode.BI_PNG)
             {
@@ -34,7 +31,7 @@ namespace BetterBmpLoader
             PixelFormat wpfFmt = PixelFormats.Bgra32;
             BitmapCorePixelFormat coreFmt = BitmapCorePixelFormat.Bgra32;
 
-            bool sourceMatch = false;
+            bool forceBgra32 = (bcrFlags & BitmapCore.BC_READ_FORCE_BGRA32) > 0;
             if (!forceBgra32 && info.imgSourceFmt != null)
             {
                 var origFmt = info.imgSourceFmt;
@@ -44,7 +41,6 @@ namespace BetterBmpLoader
                     var px = pxarr.First();
                     wpfFmt = px.wpfFmt;
                     coreFmt = px.coreFmt;
-                    sourceMatch = true;
                 }
             }
 
@@ -56,9 +52,6 @@ namespace BetterBmpLoader
                     clrs = clrs.Take(256);
                 palette = new BitmapPalette(clrs.ToList());
             }
-
-            if (!sourceMatch && strictPreserveFormat)
-                throw new NotSupportedException("The pixel format of this bitmap is not supported, and StrictPreserveOriginalFormat is set.");
 
             var bitmap = new WriteableBitmap(
                 info.imgWidth,
@@ -72,13 +65,13 @@ namespace BetterBmpLoader
 
             bitmap.Lock();
 
-            BitmapCore.ReadPixels(ref info, coreFmt, pixels, buf, preserveAlpha);
+            BitmapCore.ReadPixels(ref info, coreFmt, pixels, buf, bcrFlags);
 
             bitmap.AddDirtyRect(new System.Windows.Int32Rect(0, 0, info.imgWidth, info.imgHeight));
             bitmap.Unlock();
             bitmap.Freeze(); // dispose back buffer
 
-            return BitmapFrame.Create(bitmap);
+            return bitmap;
         }
 
         private struct PxMap
@@ -106,7 +99,7 @@ namespace BetterBmpLoader
             new PxMap(PixelFormats.Indexed1, BitmapCorePixelFormat.Indexed1),
         };
 
-        public static unsafe byte[] GetBytes(BitmapFrame bitmap, bool inclFileHeader, bool forceV5, bool forceInfo)
+        public static unsafe byte[] GetBytes(BitmapSource bitmap, uint bcrFlags)
         {
             uint stride = BitmapCore.calc_stride((ushort)bitmap.Format.BitsPerPixel, bitmap.PixelWidth);
 
@@ -114,10 +107,6 @@ namespace BetterBmpLoader
             bitmap.CopyPixels(buffer, (int)stride, 0);
 
             var clrs = bitmap.Palette == null ? null : bitmap.Palette.Colors.Select(c => new RGBQUAD { rgbRed = c.R, rgbBlue = c.B, rgbGreen = c.G }).ToArray();
-
-            var htype = BitmapCoreHeaderType.BestFit;
-            if (forceV5) htype = BitmapCoreHeaderType.ForceV5;
-            else if (forceInfo) htype = BitmapCoreHeaderType.ForceVINFO;
 
             BITMAP_WRITE_REQUEST req = new BITMAP_WRITE_REQUEST
             {
@@ -128,10 +117,6 @@ namespace BetterBmpLoader
                 imgStride = stride,
                 imgTopDown = true,
                 imgColorTable = clrs,
-                headerIncludeFile = inclFileHeader,
-                iccEmbed = false,
-                iccProfileData = null,
-                headerType = htype,
             };
 
             BITMASKS masks = default;
@@ -165,7 +150,7 @@ namespace BetterBmpLoader
             }
 
             fixed (byte* ptr = buffer)
-                return BitmapCore.WriteToBMP(ref req, ptr, masks, (ushort)bitmap.Format.BitsPerPixel);
+                return BitmapCore.WriteToBMP(ref req, ptr, masks, (ushort)bitmap.Format.BitsPerPixel, bcrFlags);
         }
 
         private class BitmapWpfColorManagement
