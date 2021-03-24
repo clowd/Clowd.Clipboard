@@ -5,7 +5,7 @@ using System.Windows.Media.Imaging;
 namespace BetterBmpLoader.Wpf
 {
     [Flags]
-    public enum BitmapWpfReaderFlags
+    public enum BitmapWpfReaderFlags : uint
     {
         /// <summary>
         /// No special parsing flags
@@ -33,7 +33,7 @@ namespace BetterBmpLoader.Wpf
     }
 
     [Flags]
-    public enum BitmapWpfWriterFlags
+    public enum BitmapWpfWriterFlags : uint
     {
         /// <summary>
         /// No special writer flags

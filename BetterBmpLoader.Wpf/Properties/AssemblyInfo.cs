@@ -21,6 +21,7 @@ using System.Runtime.InteropServices;
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("48445023-227a-4369-a7e6-64aabc099beb")]
+[assembly: InternalsVisibleTo("BetterBmpLoader.BitmapTests")]
 
 // Version information for an assembly consists of the following four values:
 //

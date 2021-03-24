@@ -4,6 +4,8 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.ComponentModel;
 
 namespace BetterBmpLoader.Gdi
 {
@@ -101,28 +103,25 @@ namespace BetterBmpLoader.Gdi
             PixelFormat gdiFmt = PixelFormat.Format32bppArgb;
             BitmapCorePixelFormat coreFmt = BitmapCorePixelFormat.Bgra32;
 
-            if (!formatbgra32)
+            if (!formatbgra32 && info.imgSourceFmt != null)
             {
                 bool sourceMatched = false;
-                var origFmt = info.imgFmt;
-                if (origFmt != null)
+                var origFmt = info.imgSourceFmt;
+                if (origFmt == BitmapCorePixelFormat.Rgb24)
                 {
-                    if (origFmt == BitmapCorePixelFormat.Rgb24)
+                    // we need BitmapCore to reverse the pixel order for GDI
+                    coreFmt = BitmapCorePixelFormat.Bgr24;
+                    gdiFmt = PixelFormat.Format24bppRgb;
+                }
+                else
+                {
+                    var pxarr = Formats.Where(f => f.coreFmt == origFmt).ToArray();
+                    if (pxarr.Length > 0)
                     {
-                        // we need BitmapCore to reverse the pixel order for GDI
-                        coreFmt = BitmapCorePixelFormat.Bgr24;
-                        gdiFmt = PixelFormat.Format24bppRgb;
-                    }
-                    else
-                    {
-                        var pxarr = Formats.Where(f => f.coreFmt == origFmt).ToArray();
-                        if (pxarr.Length > 0)
-                        {
-                            var px = pxarr.First();
-                            gdiFmt = px.gdiFmt;
-                            coreFmt = px.coreFmt;
-                            sourceMatched = true;
-                        }
+                        var px = pxarr.First();
+                        gdiFmt = px.gdiFmt;
+                        coreFmt = px.coreFmt;
+                        sourceMatched = true;
                     }
                 }
 

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace BetterBmpLoader
 {
@@ -19,7 +21,7 @@ namespace BetterBmpLoader
         private const string
             ERR_HEOF = "Bitmap stream ended while parsing header, but more data was expected. This usually indicates an malformed file or empty data stream.";
 
-        private static int CalculateBitShift(uint mask)
+        internal static int calc_shift(uint mask)
         {
             for (int shift = 0; shift < sizeof(uint) * 8; ++shift)
             {
@@ -28,8 +30,10 @@ namespace BetterBmpLoader
                     return shift;
                 }
             }
-            throw new NotSupportedException("Invalid Bit Mask");
+            throw new NotSupportedException("Invalid Bitmask");
         }
+
+        internal static uint calc_stride(ushort bbp, int width) => (bbp * (uint)width + 31) / 32 * 4;
 
         public static void ReadHeader(byte* source, int sourceLength, out BITMAP_READ_DETAILS info)
         {
@@ -282,6 +286,9 @@ namespace BetterBmpLoader
                     break;
                 case BitmapCompressionMode.BI_JPEG:
                 case BitmapCompressionMode.BI_PNG:
+                    if (bi.bV5Height < 0) throw new NotSupportedException("Top-down bitmaps are not supported with JPEG/PNG compression.");
+                    skipVerifyBppAndMasks = true;
+                    break;
                 case BitmapCompressionMode.BI_RLE4:
                 case BitmapCompressionMode.BI_RLE8:
                 case BitmapCompressionMode.OS2_RLE24:
@@ -386,7 +393,7 @@ namespace BetterBmpLoader
             if (width < 0)
                 throw new NotSupportedException("Bitmap with negative width is not allowed");
 
-            uint source_stride = (nbits * (uint)width + 31) / 32 * 4; // = width * (nbits / 8) + (width % 4); // (width * nbits + 7) / 8;
+            uint source_stride = calc_stride(nbits, width);
             uint dataOffset = hasFileHeader ? fh.bfOffBits : (uint)offset;
             uint dataSize = bi.bV5SizeImage > 0 ? bi.bV5SizeImage : (source_stride * (uint)height);
 
@@ -419,6 +426,38 @@ namespace BetterBmpLoader
                 return pels * 0.0254d;
             }
 
+            mscms.SafeProfileHandle clrsource = null;
+            mscms.mscmsIntent clrintent = mscms.mscmsIntent.INTENT_PERCEPTUAL;
+
+            try
+            {
+                if (bi.bV5CSType == ColorSpaceType.LCS_CALIBRATED_RGB) clrsource = mscms.CreateProfileFromLogicalColorSpace(bi);
+                else if (bi.bV5CSType == ColorSpaceType.PROFILE_EMBEDDED) clrsource = mscms.OpenProfile((source + profileOffset), profileSize);
+
+                switch (bi.bV5Intent)
+                {
+                    case Bv5Intent.LCS_GM_BUSINESS:
+                        clrintent = mscms.mscmsIntent.INTENT_RELATIVE_COLORIMETRIC;
+                        break;
+                    case Bv5Intent.LCS_GM_GRAPHICS:
+                        clrintent = mscms.mscmsIntent.INTENT_SATURATION;
+                        break;
+                    case Bv5Intent.LCS_GM_ABS_COLORIMETRIC:
+                        clrintent = mscms.mscmsIntent.INTENT_ABSOLUTE_COLORIMETRIC;
+                        break;
+                }
+
+                if (clrsource != null && fmt != null && fmt.MscmsFormat.HasValue && fmt.IsIndexed)
+                {
+                    // transform color table if indexed image
+                    palette = mscms.TransformColorsTo_sRGB(clrsource, palette, clrintent);
+                }
+            }
+            catch
+            {
+                // ignore color profile errors
+            }
+
             info = new BITMAP_READ_DETAILS
             {
                 dibHeader = bi,
@@ -438,17 +477,18 @@ namespace BetterBmpLoader
                 imgDataOffset = dataOffset,
                 imgDataSize = dataSize,
                 imgStride = source_stride,
-                imgFmt = fmt,
+                imgSourceFmt = fmt,
 
-                iccProfileSize = profileSize,
-                iccProfileOffset = profileOffset,
-                iccProfileType = bi.bV5CSType,
-                iccProfileIntent = bi.bV5Intent,
+                colorProfile = clrsource,
+                colorProfileIntent = clrintent,
             };
         }
 
-        public static void ReadPixels(ref BITMAP_READ_DETAILS info, BitmapCorePixelFormat toFmt, byte* sourceBufferStart, byte* destBufferStart, bool preserveFakeAlpha)
+        public static void ReadPixels(ref BITMAP_READ_DETAILS info, BitmapCorePixelFormat imgDestFmt, byte* sourceBufferStart, byte* destBufferStart, bool preserveFakeAlpha)
         {
+            if (imgDestFmt == null)
+                throw new ArgumentNullException(nameof(imgDestFmt));
+
             var compr = info.compression;
             if (compr == BitmapCompressionMode.BI_JPEG || compr == BitmapCompressionMode.BI_PNG)
             {
@@ -456,17 +496,14 @@ namespace BetterBmpLoader
             }
             else if (compr == BitmapCompressionMode.BI_RLE4 || compr == BitmapCompressionMode.BI_RLE8 || compr == BitmapCompressionMode.OS2_RLE24)
             {
-                if (toFmt != BitmapCorePixelFormat.Bgra32)
-                    throw new NotSupportedException("RLE only supports being translated to Bgra32");
-
+                if (imgDestFmt != BitmapCorePixelFormat.Bgra32) throw new NotSupportedException("RLE only supports being translated to Bgra32");
                 ReadRLE_32(ref info, sourceBufferStart, destBufferStart);
-                return;
             }
             else if (compr == BitmapCompressionMode.OS2_HUFFMAN1D)
             {
                 ReadHuffmanG31D(ref info, sourceBufferStart, destBufferStart);
             }
-            else if (info.imgFmt == toFmt && info.cTrueAlpha == toFmt.HasAlpha)
+            else if (info.imgSourceFmt == imgDestFmt && info.cTrueAlpha == imgDestFmt.HasAlpha)
             {
                 // if the source is a known/supported/standard format, we can basically just copy the buffer straight over with no further processing
                 if (info.imgTopDown)
@@ -489,26 +526,37 @@ namespace BetterBmpLoader
             }
             else if (info.bbp <= 8)
             {
-                if (toFmt != BitmapCorePixelFormat.Bgra32)
+                if (imgDestFmt != BitmapCorePixelFormat.Bgra32)
                     throw new NotSupportedException("RLE only supports being translated to Bgra32");
 
                 ReadIndexedTo32(ref info, sourceBufferStart, destBufferStart);
             }
             else if (info.bbp > 8)
             {
-                ReadBGRA_162432(ref info, toFmt.Write, sourceBufferStart, destBufferStart, preserveFakeAlpha);
+                ConvertChannelBGRA(ref info, imgDestFmt, sourceBufferStart, destBufferStart, preserveFakeAlpha);
             }
             else
             {
                 throw new NotSupportedException("Pixel format / compression not supported");
             }
+
+            // translate pixels to sRGB via embedded color profile
+            if (info.colorProfile != null && !info.colorProfile.IsInvalid && !imgDestFmt.IsIndexed && imgDestFmt.MscmsFormat.HasValue)
+            {
+                try
+                {
+                    uint stride = calc_stride(imgDestFmt.BitsPerPixel, info.imgWidth);
+                    mscms.TransformPixelsTo_sRGB(info.colorProfile, imgDestFmt.MscmsFormat.Value, destBufferStart, info.imgWidth, info.imgHeight, stride, info.colorProfileIntent);
+                }
+                catch
+                {
+                    // ignore color transformation errors
+                }
+            }
         }
 
-        private static void ReadBGRA_162432(ref BITMAP_READ_DETAILS info, WritePixelToPtr write, byte* sourceBufferStart, byte* destBufferStart, bool preserveFakeAlpha)
+        private static void ConvertChannelBGRA(ref BITMAP_READ_DETAILS info, BitmapCorePixelFormat convertToFmt, byte* sourceBufferStart, byte* destBufferStart, bool preserveFakeAlpha)
         {
-            if (write == null)
-                throw new ArgumentNullException(nameof(write));
-
             var nbits = info.bbp;
             var width = info.imgWidth;
             var height = info.imgHeight;
@@ -526,34 +574,35 @@ namespace BetterBmpLoader
 
             if (maskR != 0)
             {
-                shiftR = CalculateBitShift(maskR);
+                shiftR = calc_shift(maskR);
                 maxR = maskR >> shiftR;
                 multR = (uint)(Math.Ceiling(255d / maxR * 65536 * 256)); // bitshift << 24
             }
 
             if (maskG != 0)
             {
-                shiftG = CalculateBitShift(maskG);
+                shiftG = calc_shift(maskG);
                 maxG = maskG >> shiftG;
                 multG = (uint)(Math.Ceiling(255d / maxG * 65536 * 256));
             }
 
             if (maskB != 0)
             {
-                shiftB = CalculateBitShift(maskB);
+                shiftB = calc_shift(maskB);
                 maxB = maskB >> shiftB;
                 multB = (uint)(Math.Ceiling(255d / maxB * 65536 * 256));
             }
 
             if (maskA != 0)
             {
-                shiftA = CalculateBitShift(maskA);
+                shiftA = calc_shift(maskA);
                 maxA = maskA >> shiftA;
                 multA = (uint)(Math.Ceiling(255d / maxA * 65536 * 256)); // bitshift << 24
             }
 
-            int source_stride = (nbits * width + 31) / 32 * 4; // = width * (nbits / 8) + (width % 4); // (width * nbits + 7) / 8;
-            int dest_stride = info.imgWidth * 4;
+            var write = convertToFmt.Write;
+            uint source_stride = calc_stride(nbits, width);
+            uint dest_stride = calc_stride(convertToFmt.BitsPerPixel, width);
 
             restartLoop:
 
@@ -643,8 +692,8 @@ namespace BetterBmpLoader
             var height = info.imgHeight;
             var upside_down = info.imgTopDown;
 
-            int source_stride = (nbits * width + 31) / 32 * 4; // = width * (nbits / 8) + (width % 4); // (width * nbits + 7) / 8;
-            int dest_stride = info.imgWidth * 4;
+            uint source_stride = calc_stride(nbits, width);
+            uint dest_stride = calc_stride(32, width);
 
             RGBQUAD color;
             int pal = palette.Length;
@@ -1075,10 +1124,10 @@ namespace BetterBmpLoader
 
         public static byte[] WriteToBMP(ref BITMAP_WRITE_REQUEST info, byte* sourceBufferStart, BitmapCorePixelFormat fmt)
         {
-            return WriteToBMP(ref info, sourceBufferStart, fmt.Masks, fmt.BitsPerPixel, fmt.LcmsFormat);
+            return WriteToBMP(ref info, sourceBufferStart, fmt.Masks, fmt.BitsPerPixel);
         }
 
-        public static byte[] WriteToBMP(ref BITMAP_WRITE_REQUEST info, byte* sourceBufferStart, BITMASKS masks, ushort nbits, uint lcmspxFmt)
+        public static byte[] WriteToBMP(ref BITMAP_WRITE_REQUEST info, byte* sourceBufferStart, BITMASKS masks, ushort nbits)
         {
             bool renderFileHeader = info.headerIncludeFile;
             bool iccEmbed = info.iccEmbed;
@@ -1267,374 +1316,7 @@ namespace BetterBmpLoader
                 Marshal.Copy((IntPtr)sourceBufferStart, buffer, (int)offset, (int)vinfo.bV5SizeImage);
             }
 
-            if (lcmspxFmt > 0 && hasIcc && !iccEmbed) // convert to sRGB if we've been given a color profile and have been instructed not to embed it
-            {
-                fixed (byte* bufferPtr = buffer)
-                fixed (byte* profilePtr = iccProfileData)
-                    Lcms.TransformEmbeddedPixelFormat(lcmspxFmt, profilePtr, (uint)iccProfileData.Length, (bufferPtr + pxOffset),
-                        info.imgWidth, info.imgHeight, (int)info.imgStride, Bv5Intent.LCS_GM_IMAGES);
-            }
-
             return buffer;
-        }
-    }
-
-    internal static class Lcms
-    {
-        private enum Intent : uint
-        {
-            Perceptual = 0,
-            RelativeColorimetric = 1,
-            Saturation = 2,
-            AbsoluteColorimetric = 3,
-        }
-
-        [Flags]
-        private enum PixelType : uint
-        {
-            Any = 0,    // Don't check colorspace
-                        // Enumeration values 1 & 2 are reserved
-            Gray = 3,
-            RGB = 4,
-            CMY = 5,
-            CMYK = 6,
-            YCbCr = 7,
-            YUV = 8,    // Lu'v'
-            XYZ = 9,
-            Lab = 10,
-            YUVK = 11,  // Lu'v'K
-            HSV = 12,
-            HLS = 13,
-            Yxy = 14,
-            MCH1 = 15,
-            MCH2 = 16,
-            MCH3 = 17,
-            MCH4 = 18,
-            MCH5 = 19,
-            MCH6 = 20,
-            MCH7 = 21,
-            MCH8 = 22,
-            MCH9 = 23,
-            MCH10 = 24,
-            MCH11 = 25,
-            MCH12 = 26,
-            MCH13 = 27,
-            MCH14 = 28,
-            MCH15 = 29,
-            LabV2 = 30
-        }
-
-        private static uint FLOAT_SH(uint s) { return s << 22; }
-        private static uint OPTIMIZED_SH(uint s) { return s << 21; }
-        private static uint COLORSPACE_SH(PixelType s) { return Convert.ToUInt32(s) << 16; }
-        private static uint SWAPFIRST_SH(uint s) { return s << 14; }
-        private static uint FLAVOR_SH(uint s) { return s << 13; }
-        private static uint PLANAR_SH(uint s) { return s << 12; }
-        private static uint ENDIAN16_SH(uint s) { return s << 11; }
-        private static uint DOSWAP_SH(uint s) { return s << 10; }
-        private static uint EXTRA_SH(uint s) { return s << 7; }
-        private static uint CHANNELS_SH(uint s) { return s << 3; }
-        private static uint BYTES_SH(uint s) { return s; }
-
-        public static readonly uint TYPE_GRAY_8
-                = COLORSPACE_SH(PixelType.Gray) | CHANNELS_SH(1) | BYTES_SH(1);
-        public static readonly uint TYPE_GRAY_8_REV
-                = COLORSPACE_SH(PixelType.Gray) | CHANNELS_SH(1) | BYTES_SH(1) | FLAVOR_SH(1);
-        public static readonly uint TYPE_GRAY_16
-                = COLORSPACE_SH(PixelType.Gray) | CHANNELS_SH(1) | BYTES_SH(2);
-        public static readonly uint TYPE_GRAY_16_REV
-                = COLORSPACE_SH(PixelType.Gray) | CHANNELS_SH(1) | BYTES_SH(2) | FLAVOR_SH(1);
-        public static readonly uint TYPE_GRAY_16_SE
-                = COLORSPACE_SH(PixelType.Gray) | CHANNELS_SH(1) | BYTES_SH(2) | ENDIAN16_SH(1);
-        public static readonly uint TYPE_GRAYA_8
-                = COLORSPACE_SH(PixelType.Gray) | EXTRA_SH(1) | CHANNELS_SH(1) | BYTES_SH(1);
-        public static readonly uint TYPE_GRAYA_16
-                = COLORSPACE_SH(PixelType.Gray) | EXTRA_SH(1) | CHANNELS_SH(1) | BYTES_SH(2);
-        public static readonly uint TYPE_GRAYA_16_SE
-                = COLORSPACE_SH(PixelType.Gray) | EXTRA_SH(1) | CHANNELS_SH(1) | BYTES_SH(2) | ENDIAN16_SH(1);
-        public static readonly uint TYPE_GRAYA_8_PLANAR
-                = COLORSPACE_SH(PixelType.Gray) | EXTRA_SH(1) | CHANNELS_SH(1) | BYTES_SH(1) | PLANAR_SH(1);
-        public static readonly uint TYPE_GRAYA_16_PLANAR
-                = COLORSPACE_SH(PixelType.Gray) | EXTRA_SH(1) | CHANNELS_SH(1) | BYTES_SH(2) | PLANAR_SH(1);
-
-        public static readonly uint TYPE_RGB_8
-                = COLORSPACE_SH(PixelType.RGB) | CHANNELS_SH(3) | BYTES_SH(1);
-        public static readonly uint TYPE_RGB_8_PLANAR
-                = COLORSPACE_SH(PixelType.RGB) | CHANNELS_SH(3) | BYTES_SH(1) | PLANAR_SH(1);
-        public static readonly uint TYPE_BGR_8
-                = COLORSPACE_SH(PixelType.RGB) | CHANNELS_SH(3) | BYTES_SH(1) | DOSWAP_SH(1);
-        public static readonly uint TYPE_BGR_8_PLANAR
-                = COLORSPACE_SH(PixelType.RGB) | CHANNELS_SH(3) | BYTES_SH(1) | DOSWAP_SH(1) | PLANAR_SH(1);
-        public static readonly uint TYPE_RGB_16
-                = COLORSPACE_SH(PixelType.RGB) | CHANNELS_SH(3) | BYTES_SH(2);
-        public static readonly uint TYPE_RGB_16_PLANAR
-                = COLORSPACE_SH(PixelType.RGB) | CHANNELS_SH(3) | BYTES_SH(2) | PLANAR_SH(1);
-        public static readonly uint TYPE_RGB_16_SE
-                = COLORSPACE_SH(PixelType.RGB) | CHANNELS_SH(3) | BYTES_SH(2) | ENDIAN16_SH(1);
-        public static readonly uint TYPE_BGR_16
-                = COLORSPACE_SH(PixelType.RGB) | CHANNELS_SH(3) | BYTES_SH(2) | DOSWAP_SH(1);
-        public static readonly uint TYPE_BGR_16_PLANAR
-                = COLORSPACE_SH(PixelType.RGB) | CHANNELS_SH(3) | BYTES_SH(2) | DOSWAP_SH(1) | PLANAR_SH(1);
-        public static readonly uint TYPE_BGR_16_SE
-                = COLORSPACE_SH(PixelType.RGB) | CHANNELS_SH(3) | BYTES_SH(2) | DOSWAP_SH(1) | ENDIAN16_SH(1);
-
-        public static readonly uint TYPE_RGBA_8
-                = COLORSPACE_SH(PixelType.RGB) | EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(1);
-        public static readonly uint TYPE_RGBA_8_PLANAR
-                = COLORSPACE_SH(PixelType.RGB) | EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(1) | PLANAR_SH(1);
-        public static readonly uint TYPE_RGBA_16
-                = COLORSPACE_SH(PixelType.RGB) | EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(2);
-        public static readonly uint TYPE_RGBA_16_PLANAR
-                = COLORSPACE_SH(PixelType.RGB) | EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(2) | PLANAR_SH(1);
-        public static readonly uint TYPE_RGBA_16_SE
-                = COLORSPACE_SH(PixelType.RGB) | EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(2) | ENDIAN16_SH(1);
-
-        public static readonly uint TYPE_ARGB_8
-                = COLORSPACE_SH(PixelType.RGB) | EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(1) | SWAPFIRST_SH(1);
-        public static readonly uint TYPE_ARGB_8_PLANAR
-                = COLORSPACE_SH(PixelType.RGB) | EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(1) | SWAPFIRST_SH(1) | PLANAR_SH(1);
-        public static readonly uint TYPE_ARGB_16
-                = COLORSPACE_SH(PixelType.RGB) | EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(2) | SWAPFIRST_SH(1);
-
-        public static readonly uint TYPE_ABGR_8
-                = COLORSPACE_SH(PixelType.RGB) | EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(1) | DOSWAP_SH(1);
-        public static readonly uint TYPE_ABGR_8_PLANAR
-                = COLORSPACE_SH(PixelType.RGB) | EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(1) | DOSWAP_SH(1) | PLANAR_SH(1);
-        public static readonly uint TYPE_ABGR_16
-                = COLORSPACE_SH(PixelType.RGB) | EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(2) | DOSWAP_SH(1);
-        public static readonly uint TYPE_ABGR_16_PLANAR
-                = COLORSPACE_SH(PixelType.RGB) | EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(2) | DOSWAP_SH(1) | PLANAR_SH(1);
-        public static readonly uint TYPE_ABGR_16_SE
-                = COLORSPACE_SH(PixelType.RGB) | EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(2) | DOSWAP_SH(1) | ENDIAN16_SH(1);
-
-        public static readonly uint TYPE_BGRA_8
-                = COLORSPACE_SH(PixelType.RGB) | EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(1) | DOSWAP_SH(1) | SWAPFIRST_SH(1);
-        public static readonly uint TYPE_BGRA_8_PLANAR
-                = COLORSPACE_SH(PixelType.RGB) | EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(1) | DOSWAP_SH(1) | SWAPFIRST_SH(1) | PLANAR_SH(1);
-        public static readonly uint TYPE_BGRA_16
-                = COLORSPACE_SH(PixelType.RGB) | EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(2) | DOSWAP_SH(1) | SWAPFIRST_SH(1);
-        public static readonly uint TYPE_BGRA_16_SE
-                = COLORSPACE_SH(PixelType.RGB) | EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(2) | DOSWAP_SH(1) | SWAPFIRST_SH(1) | ENDIAN16_SH(1);
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct CIExyY
-        {
-            [MarshalAs(UnmanagedType.R8)]
-            public double x;
-            [MarshalAs(UnmanagedType.R8)]
-            public double y;
-            [MarshalAs(UnmanagedType.R8)]
-            public double Y;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct CIExyYTRIPLE
-        {
-            public CIExyY Red;
-            public CIExyY Green;
-            public CIExyY Blue;
-
-            public static CIExyYTRIPLE FromHandle(IntPtr handle)
-            {
-                return Marshal.PtrToStructure<CIExyYTRIPLE>(handle);
-            }
-        }
-
-        private const string Liblcms = "lcms2";
-
-        [DllImport(Liblcms, EntryPoint = "cmsDoTransformLineStride", CallingConvention = CallingConvention.StdCall)]
-        private unsafe static extern void DoTransformLineStride(
-            IntPtr transform,
-            void* inputBuffer,
-            void* outputBuffer,
-            [MarshalAs(UnmanagedType.U4)] int pixelsPerLine,
-            [MarshalAs(UnmanagedType.U4)] int lineCount,
-            [MarshalAs(UnmanagedType.U4)] int bytesPerLineIn,
-            [MarshalAs(UnmanagedType.U4)] int bytesPerLineOut,
-            [MarshalAs(UnmanagedType.U4)] int bytesPerPlaneIn,
-            [MarshalAs(UnmanagedType.U4)] int bytesPerPlaneOut);
-
-        [DllImport(Liblcms, EntryPoint = "cmsCreateTransform", CallingConvention = CallingConvention.StdCall)]
-        private static extern IntPtr CreateTransform(
-            IntPtr inputProfile,
-            [MarshalAs(UnmanagedType.U4)] uint inputFormat,
-            IntPtr outputProfile,
-            [MarshalAs(UnmanagedType.U4)] uint outputFormat,
-            [MarshalAs(UnmanagedType.U4)] uint intent,
-            [MarshalAs(UnmanagedType.U4)] uint flags);
-
-        [DllImport(Liblcms, EntryPoint = "cmsCreate_sRGBProfile", CallingConvention = CallingConvention.StdCall)]
-        private static extern IntPtr Create_sRGBProfile();
-
-        [DllImport(Liblcms, EntryPoint = "cmsCreateRGBProfile", CallingConvention = CallingConvention.StdCall)]
-        private static extern IntPtr CreateRGBProfile(
-            in CIExyY whitePoint,
-            in CIExyYTRIPLE primaries,
-            IntPtr[] transferFunction);
-
-        [DllImport(Liblcms, EntryPoint = "cmsCloseProfile", CallingConvention = CallingConvention.StdCall)]
-        private static extern int CloseProfile(IntPtr handle);
-
-        [DllImport(Liblcms, EntryPoint = "cmsOpenProfileFromMem", CallingConvention = CallingConvention.StdCall)]
-        private unsafe static extern IntPtr OpenProfileFromMem(/*const*/ void* memPtr, [MarshalAs(UnmanagedType.U4)] int memSize);
-
-        [DllImport(Liblcms, EntryPoint = "cmsDeleteTransform", CallingConvention = CallingConvention.StdCall)]
-        private static extern void DeleteTransform(IntPtr transform);
-
-        [DllImport(Liblcms, EntryPoint = "cmsBuildGamma", CallingConvention = CallingConvention.StdCall)]
-        private static extern IntPtr BuildGammaCurve(IntPtr handle, [MarshalAs(UnmanagedType.R8)] double gamma);
-
-        [DllImport(Liblcms, EntryPoint = "cmsFreeToneCurve", CallingConvention = CallingConvention.StdCall)]
-        private static extern void FreeToneCurve(IntPtr handle);
-
-        public static bool CheckLibAvailble()
-        {
-            try
-            {
-                DeleteTransform(IntPtr.Zero);
-                return true;
-            }
-            catch (DllNotFoundException)
-            {
-                return false;
-            }
-        }
-
-        private static CIExyYTRIPLE GetPrimariesFromBMPEndpoints(uint red_x, uint red_y, uint green_x, uint green_y, uint blue_x, uint blue_y)
-        {
-            uint[] chk = new uint[] { red_x, red_y, 1, green_x, green_y, 1, blue_x, blue_y, 1 };
-            var invalid = chk.Where(c => c == 0).ToArray();
-            if (invalid.Length > 0)
-                throw new NotSupportedException("Bitmap with LCS_CALIBRATED_RGB must explicitly set RGB endpoints >0 in header. Values were: " + String.Join(", ", chk));
-
-            double fxpt2dot30_to_float(uint fxpt2dot30) => fxpt2dot30 * 9.31322574615478515625e-10f;
-            double rx = fxpt2dot30_to_float(red_x);
-            double ry = fxpt2dot30_to_float(red_y);
-            double gx = fxpt2dot30_to_float(green_x);
-            double gy = fxpt2dot30_to_float(green_y);
-            double bx = fxpt2dot30_to_float(blue_x);
-            double by = fxpt2dot30_to_float(blue_y);
-
-            return new CIExyYTRIPLE
-            {
-                Red = new CIExyY { x = rx, y = ry, Y = 1 },
-                Green = new CIExyY { x = gx, y = gy, Y = 1 },
-                Blue = new CIExyY { x = bx, y = by, Y = 1 }
-            };
-        }
-
-        private static CIExyY GetWhitePoint_sRGB()
-        {
-            double kD65x = 0.31271;
-            double kD65y = 0.32902;
-            return new CIExyY { x = kD65x, y = kD65y, Y = 1, };
-        }
-
-        private static Intent ConvertIntent(Bv5Intent iccProfileIntent)
-        {
-            Intent lcmsIntent;
-            switch (iccProfileIntent)
-            {
-                case Bv5Intent.LCS_GM_BUSINESS: lcmsIntent = Intent.Saturation; break;
-                case Bv5Intent.LCS_GM_GRAPHICS: lcmsIntent = Intent.RelativeColorimetric; break;
-                case Bv5Intent.LCS_GM_IMAGES: lcmsIntent = Intent.Perceptual; break;
-                case Bv5Intent.LCS_GM_ABS_COLORIMETRIC: lcmsIntent = Intent.AbsoluteColorimetric; break;
-                default: throw new ArgumentOutOfRangeException(nameof(iccProfileIntent));
-            }
-            return lcmsIntent;
-        }
-
-        public unsafe static void TransformBGRA8(ref BITMAP_READ_DETAILS info, byte* source, byte* dataBuffer, int dataStride)
-        {
-            if (info.iccProfileType == ColorSpaceType.LCS_sRGB || info.iccProfileType == ColorSpaceType.LCS_WINDOWS_COLOR_SPACE)
-                return; // do nothing
-
-
-            if (info.iccProfileType == ColorSpaceType.LCS_CALIBRATED_RGB)
-            {
-                var primaries = Lcms.GetPrimariesFromBMPEndpoints(
-                      info.dibHeader.bV5Endpoints_1x, info.dibHeader.bV5Endpoints_1y,
-                      info.dibHeader.bV5Endpoints_2x, info.dibHeader.bV5Endpoints_2y,
-                      info.dibHeader.bV5Endpoints_3x, info.dibHeader.bV5Endpoints_3y);
-
-                var whitepoint = Lcms.GetWhitePoint_sRGB();
-                var lcmsIntent = ConvertIntent(info.iccProfileIntent);
-
-                TransformCalibratedBGRA8(
-                    primaries, whitepoint,
-                    info.dibHeader.bV5GammaRed, info.dibHeader.bV5GammaGreen, info.dibHeader.bV5GammaBlue,
-                    dataBuffer, info.imgWidth, info.imgHeight, dataStride, lcmsIntent);
-            }
-            else if (info.iccProfileType == ColorSpaceType.PROFILE_EMBEDDED)
-            {
-                TransformEmbeddedPixelFormat(TYPE_BGRA_8, (source + info.iccProfileOffset), info.iccProfileSize, dataBuffer, info.imgWidth, info.imgHeight, dataStride, info.iccProfileIntent);
-            }
-            else
-            {
-                throw new NotSupportedException(info.iccProfileType.ToString());
-            }
-        }
-
-        public unsafe static void TransformEmbeddedPixelFormat(uint pxFormat, void* profilePtr, uint profileSize, void* data, int width, int height, int stride, Bv5Intent bvintent)
-        {
-            var intent = ConvertIntent(bvintent);
-
-            var source = OpenProfileFromMem(profilePtr, (int)profileSize);
-            var target = Create_sRGBProfile();
-            var transform = CreateTransform(source, pxFormat, target, pxFormat, (uint)intent, 0);
-
-            try
-            {
-                if (source == IntPtr.Zero)
-                    throw new Exception("Unable to read source color profile.");
-                if (target == IntPtr.Zero)
-                    throw new Exception("Unable to create target sRGB color profile.");
-                if (transform == IntPtr.Zero)
-                    throw new Exception("Unable to create color transform.");
-
-                DoTransformLineStride(transform, data, data, width, height, stride, stride, 0, 0);
-            }
-            finally
-            {
-                DeleteTransform(transform);
-                CloseProfile(target);
-                CloseProfile(source);
-            }
-        }
-
-        private unsafe static void TransformCalibratedBGRA8(CIExyYTRIPLE primaries, CIExyY whitePoint, uint red_gamma, uint green_gamma, uint blue_gamma,
-            void* data, int width, int height, int stride, Intent intent)
-        {
-            // https://github.com/chromium/chromium/blob/99314be8152e688bafbbf9a615536bdbb289ea87/third_party/blink/renderer/platform/image-decoders/bmp/bmp_image_reader.cc#L355
-            double SkFixedToFloat(uint z) => ((z) * 1.52587890625e-5f);
-
-            var tr = BuildGammaCurve(IntPtr.Zero, SkFixedToFloat(red_gamma));
-            var tg = BuildGammaCurve(IntPtr.Zero, SkFixedToFloat(green_gamma));
-            var tb = BuildGammaCurve(IntPtr.Zero, SkFixedToFloat(blue_gamma));
-            var source = CreateRGBProfile(whitePoint, primaries, new[] { tr, tg, tb });
-            var target = Create_sRGBProfile();
-            var transform = CreateTransform(source, TYPE_BGRA_8, target, TYPE_BGRA_8, (uint)intent, 0);
-
-            try
-            {
-                if (source == IntPtr.Zero)
-                    throw new Exception("Unable to read source color profile.");
-                if (target == IntPtr.Zero)
-                    throw new Exception("Unable to create target sRGB color profile.");
-                if (transform == IntPtr.Zero)
-                    throw new Exception("Unable to create color transform.");
-
-                DoTransformLineStride(transform, data, data, width, height, stride, stride, 0, 0);
-            }
-            finally
-            {
-                DeleteTransform(transform);
-                CloseProfile(target);
-                CloseProfile(source);
-                FreeToneCurve(tr);
-                FreeToneCurve(tg);
-                FreeToneCurve(tb);
-            }
         }
     }
 
@@ -1703,7 +1385,7 @@ namespace BetterBmpLoader
         public bool IsIndexed => BitsPerPixel < 16;
         public bool HasAlpha => Masks.maskAlpha != 0;
 
-        public uint LcmsFormat { get; private set; }
+        public mscms.mscmsPxFormat? MscmsFormat { get; private set; }
         public BITMASKS Masks { get; private set; }
         public WritePixelToPtr Write { get; private set; }
         public ushort BitsPerPixel { get; private set; }
@@ -1732,6 +1414,7 @@ namespace BetterBmpLoader
 
         public static readonly BitmapCorePixelFormat Bgr555X = new BitmapCorePixelFormat
         {
+            MscmsFormat = mscms.mscmsPxFormat.BM_x555RGB,
             BitsPerPixel = 16,
             Masks = BitFields.BITFIELDS_BGRA_555X,
             Write = (ptr, b, g, r, a) =>
@@ -1753,6 +1436,7 @@ namespace BetterBmpLoader
 
         public static readonly BitmapCorePixelFormat Bgr5551 = new BitmapCorePixelFormat
         {
+            MscmsFormat = mscms.mscmsPxFormat.BM_x555RGB,
             BitsPerPixel = 16,
             Masks = BitFields.BITFIELDS_BGRA_5551,
             Write = (ptr, b, g, r, a) =>
@@ -1775,6 +1459,7 @@ namespace BetterBmpLoader
 
         public static readonly BitmapCorePixelFormat Bgr565 = new BitmapCorePixelFormat
         {
+            MscmsFormat = mscms.mscmsPxFormat.BM_565RGB,
             BitsPerPixel = 16,
             Masks = BitFields.BITFIELDS_BGR_565,
             Write = (ptr, b, g, r, a) =>
@@ -1798,8 +1483,8 @@ namespace BetterBmpLoader
 
         public static readonly BitmapCorePixelFormat Rgb24 = new BitmapCorePixelFormat
         {
+            MscmsFormat = mscms.mscmsPxFormat.BM_BGRTRIPLETS,
             BitsPerPixel = 24,
-            LcmsFormat = Lcms.TYPE_RGB_8,
             Masks = BitFields.BITFIELDS_RGB_24,
             Write = (ptr, b, g, r, a) =>
             {
@@ -1812,8 +1497,8 @@ namespace BetterBmpLoader
 
         public static readonly BitmapCorePixelFormat Bgr24 = new BitmapCorePixelFormat
         {
+            MscmsFormat = mscms.mscmsPxFormat.BM_RGBTRIPLETS,
             BitsPerPixel = 24,
-            LcmsFormat = Lcms.TYPE_BGR_8,
             Masks = BitFields.BITFIELDS_BGR_24,
             Write = (ptr, b, g, r, a) =>
             {
@@ -1826,8 +1511,8 @@ namespace BetterBmpLoader
 
         public static readonly BitmapCorePixelFormat Bgra32 = new BitmapCorePixelFormat
         {
+            MscmsFormat = mscms.mscmsPxFormat.BM_xRGBQUADS,
             BitsPerPixel = 32,
-            LcmsFormat = Lcms.TYPE_BGRA_8,
             Masks = BitFields.BITFIELDS_BGRA_32,
             Write = (ptr, b, g, r, a) =>
             {
@@ -2057,7 +1742,7 @@ namespace BetterBmpLoader
         public bool cTrueAlpha;
         public bool cIndexed;
 
-        public BitmapCorePixelFormat imgFmt;
+        public BitmapCorePixelFormat imgSourceFmt;
         public RGBQUAD[] imgColorTable;
         public uint imgStride;
         public uint imgDataOffset;
@@ -2066,10 +1751,11 @@ namespace BetterBmpLoader
         public int imgWidth;
         public int imgHeight;
 
-        public uint iccProfileOffset;
-        public uint iccProfileSize;
-        public ColorSpaceType iccProfileType;
-        public Bv5Intent iccProfileIntent;
+        //public uint iccProfileOffset;
+        //public uint iccProfileSize;
+        //public ColorSpaceType iccProfileType;
+        public mscms.SafeProfileHandle colorProfile;
+        public mscms.mscmsIntent colorProfileIntent;
     }
 
     internal enum ColorSpaceType : uint
@@ -2678,5 +2364,499 @@ namespace BetterBmpLoader
 
         public static readonly G31DFaxCode[] WhiteCodes = FromArray(faxWhiteCodes).OrderBy(c => c.bitLength).ToArray();
         public static readonly G31DFaxCode[] BlackCodes = FromArray(faxBlackCodes).OrderBy(c => c.bitLength).ToArray();
+    }
+
+    internal class mscms
+    {
+        // https://docs.microsoft.com/en-us/windows/win32/api/icm/
+        private const string libmscms = "mscms";
+
+        //private const uint LCS_SIGNATURE = 0x50534f43;
+        //private const UInt32 INTENT_PERCEPTUAL = 0;
+        //private const UInt32 INTENT_RELATIVE_COLORIMETRIC = 1;
+        //private const UInt32 INTENT_SATURATION = 2;
+        //private const UInt32 INTENT_ABSOLUTE_COLORIMETRIC = 3;
+        //private const UInt32 PROOF_MODE = 0x00000001;
+        //private const UInt32 NORMAL_MODE = 0x00000002;
+        private const UInt32 BEST_MODE = 0x00000003;
+        //private const UInt32 ENABLE_GAMUT_CHECKING = 0x00010000;
+        private const UInt32 USE_RELATIVE_COLORIMETRIC = 0x00020000;
+        //private const UInt32 FAST_TRANSLATE = 0x00040000;
+
+        [DllImport(libmscms)]
+        private static extern SafeTransformHandle CreateMultiProfileTransform(IntPtr[] /* PHPROFILE */ pahProfiles, uint nProfiles, uint[] padwIntent, uint nIntents, uint dwFlags, uint indexPreferredCMM);
+
+        [DllImport(libmscms, SetLastError = true)]
+        private static extern bool DeleteColorTransform(IntPtr hColorTransform);
+
+        [DllImport(libmscms, SetLastError = true)]
+        private static extern unsafe bool TranslateBitmapBits(SafeTransformHandle hTransform, void* pSrcBits, mscmsPxFormat bmFormat, uint dwWidth, uint dwHeight, uint dwInputStride, void* pDestBits, mscmsPxFormat bmOutput, uint dwOutputStride, IntPtr pfnCallBack, IntPtr lParam);
+
+        [DllImport(libmscms, SetLastError = true)]
+        private static extern bool CloseColorProfile(IntPtr hHandle);
+
+        [DllImport(libmscms, SetLastError = true)]
+        private static extern SafeProfileHandle OpenColorProfile(ref PROFILE pProfile, uint dwDesiredAccess, uint dwShareMode, uint dwCreationMode);
+
+        [DllImport(libmscms, SetLastError = true)]
+        private static extern bool CreateProfileFromLogColorSpace(ref LOGCOLORSPACE pLogColorSpace, out IntPtr pProfile);
+
+        [DllImport(libmscms, SetLastError = true)]
+        private static extern bool GetStandardColorSpaceProfile(IntPtr pNull, ColorSpaceType dwSCS, StringBuilder pProfileName, out int pdwSize);
+
+        [DllImport(libmscms, SetLastError = true)]
+        private static extern bool GetColorDirectory(IntPtr pNull, StringBuilder pBuffer, out int pdwSize);
+
+        [DllImport(libmscms, SetLastError = true)]
+        private static extern bool TranslateColors(SafeTransformHandle hTransform, IntPtr paInputColors, uint nColors, COLOR_TYPE ctInput, IntPtr paOutputColors, COLOR_TYPE ctOutput);
+
+        [DllImport("kernel32.dll", ExactSpelling = true, CharSet = CharSet.Auto)]
+        private static extern int GlobalSize(IntPtr handle);
+
+        [DllImport("kernel32.dll", ExactSpelling = true, CharSet = CharSet.Auto)]
+        private static extern IntPtr GlobalFree(IntPtr handle);
+
+        [DllImport("kernel32.dll", ExactSpelling = true, CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern IntPtr GlobalLock(IntPtr handle);
+
+        [DllImport("kernel32.dll", ExactSpelling = true, CharSet = CharSet.Auto)]
+        private static extern bool GlobalUnlock(IntPtr handle);
+
+        public static unsafe RGBQUAD[] TransformColorsTo_sRGB(SafeProfileHandle source, RGBQUAD[] color, mscmsIntent dwIntent)
+        {
+            var colorSize = Environment.Is64BitProcess ? 16 : 8;
+            var size = colorSize * color.Length;
+
+            // https://docs.microsoft.com/en-us/windows/win32/api/icm/nf-icm-translatecolors
+            // https://docs.microsoft.com/en-us/windows/win32/api/icm/ns-icm-color
+
+            IntPtr paInputColors = Marshal.AllocHGlobal(size);
+            IntPtr paOutputColors = Marshal.AllocHGlobal(size);
+
+            const double cmax = 255d;
+            const double nmax = 0xFFFF;
+            const ushort nmask = 0xFFFF;
+
+            try
+            {
+                var inputPtr = (byte*)paInputColors;
+                foreach (var c in color)
+                {
+                    var nclr = (long)(c.rgbRed / cmax * nmax) | ((long)(c.rgbGreen / cmax * nmax) << 16) | ((long)(c.rgbBlue / cmax * nmax) << 32);
+                    *((long*)inputPtr) = nclr;
+                    inputPtr += colorSize;
+                }
+
+                using (var dest = OpenProfile_sRGB())
+                using (var transform = CreateTransform(source, dest, dwIntent))
+                {
+                    var success = TranslateColors(transform, paInputColors, (uint)color.Length, COLOR_TYPE.COLOR_3_CHANNEL, paOutputColors, COLOR_TYPE.COLOR_3_CHANNEL);
+                    if (!success)
+                        throw new Win32Exception();
+
+                    var outputPtr = (byte*)paOutputColors;
+                    var output = new RGBQUAD[color.Length];
+                    for (int i = 0; i < color.Length; i++)
+                    {
+                        long nclr = *((long*)outputPtr);
+                        output[i] = new RGBQUAD
+                        {
+                            rgbRed = (byte)((nclr & nmask) / nmax * cmax),
+                            rgbGreen = (byte)(((nclr >> 16) & nmask) / nmax * cmax),
+                            rgbBlue = (byte)(((nclr >> 32) & nmask) / nmax * cmax),
+                        };
+                        outputPtr += colorSize;
+                    }
+
+                    return output;
+                }
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(paInputColors);
+                Marshal.FreeHGlobal(paOutputColors);
+            }
+        }
+
+        public static unsafe void TransformPixelsTo_sRGB(SafeProfileHandle source, mscmsPxFormat pxFormat, void* data, int width, int height, uint stride, mscmsIntent dwIntent)
+        {
+            using (var dest = OpenProfile_sRGB())
+            using (var transform = CreateTransform(source, dest, dwIntent))
+            {
+                var success = TranslateBitmapBits(transform, data, pxFormat, (uint)width, (uint)height, stride, data, pxFormat, stride, IntPtr.Zero, IntPtr.Zero);
+                if (!success)
+                    throw new Win32Exception();
+            }
+        }
+
+        public static SafeTransformHandle CreateTransform(SafeProfileHandle sourceProfile, SafeProfileHandle destinationProfile, mscmsIntent dwIntent)
+        {
+            if (sourceProfile == null || sourceProfile.IsInvalid)
+                throw new ArgumentNullException("sourceProfile");
+
+            if (destinationProfile == null || destinationProfile.IsInvalid)
+                throw new ArgumentNullException("destinationProfile");
+
+            IntPtr[] handles = new IntPtr[2];
+            bool success = true;
+
+            sourceProfile.DangerousAddRef(ref success);
+            destinationProfile.DangerousAddRef(ref success);
+
+            try
+            {
+                handles[0] = sourceProfile.DangerousGetHandle();
+                handles[1] = destinationProfile.DangerousGetHandle();
+
+                uint[] dwIntents = new uint[2] { (uint)dwIntent, (uint)dwIntent };
+
+                var htransform = CreateMultiProfileTransform(
+                    handles, (uint)handles.Length,
+                    dwIntents, (uint)dwIntents.Length,
+                    BEST_MODE | USE_RELATIVE_COLORIMETRIC, 0);
+
+                if (htransform.IsInvalid)
+                    throw new Win32Exception();
+
+                return htransform;
+            }
+            finally
+            {
+                sourceProfile.DangerousRelease();
+                destinationProfile.DangerousRelease();
+            }
+        }
+
+        public static unsafe SafeProfileHandle CreateProfileFromLogicalColorSpace(BITMAPV5HEADER info)
+        {
+            // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-logcolorspacew
+            var lcs = new LOGCOLORSPACE
+            {
+                lcsCSType = ColorSpaceType.LCS_CALIBRATED_RGB,
+                lcsVersion = 0x400,
+                lcsSignature = 0x50534F43, // 'PSOC'
+                lcsFilename = "\0",
+                lcsIntent = info.bV5Intent,
+                lcsEndpoints_1x = info.bV5Endpoints_1x,
+                lcsEndpoints_1y = info.bV5Endpoints_1y,
+                lcsEndpoints_1z = info.bV5Endpoints_1z,
+                lcsEndpoints_2x = info.bV5Endpoints_2x,
+                lcsEndpoints_2y = info.bV5Endpoints_2y,
+                lcsEndpoints_2z = info.bV5Endpoints_2z,
+                lcsEndpoints_3x = info.bV5Endpoints_3x,
+                lcsEndpoints_3y = info.bV5Endpoints_3y,
+                lcsEndpoints_3z = info.bV5Endpoints_3z,
+                lcsGammaBlue = info.bV5GammaBlue,
+                lcsGammaGreen = info.bV5GammaGreen,
+                lcsGammaRed = info.bV5GammaRed,
+            };
+
+            var success = CreateProfileFromLogColorSpace(ref lcs, out var hGlobal);
+            if (!success) throw new Win32Exception();
+
+            var hsize = GlobalSize(hGlobal);
+            var hptr = GlobalLock(hGlobal);
+            try
+            {
+                return OpenProfile((void*)hptr, (uint)hsize);
+            }
+            finally
+            {
+                GlobalUnlock(hGlobal);
+                GlobalFree(hGlobal);
+            }
+        }
+
+        public static unsafe SafeProfileHandle OpenProfile(byte[] profileData)
+        {
+            fixed (void* pBytes = profileData)
+                return OpenProfile(pBytes, (uint)profileData.Length);
+        }
+
+        public static unsafe SafeProfileHandle OpenProfile(void* pProfileData, uint pLength)
+        {
+            var profile = new PROFILE
+            {
+                dwType = ProfileType.PROFILE_MEMBUFFER,
+                pProfileData = pProfileData,
+                cbDataSize = pLength,
+            };
+
+            return OpenColorProfile(ref profile, 1, 1, 3 /*OPEN_EXISTING*/);
+        }
+
+        public static unsafe SafeProfileHandle OpenProfile_sRGB()
+        {
+            bool success;
+            int length;
+            StringBuilder buffer;
+
+            length = 1024;
+            buffer = new StringBuilder(length);
+            success = GetStandardColorSpaceProfile(IntPtr.Zero, ColorSpaceType.LCS_sRGB, buffer, out length);
+            if (!success) throw new Win32Exception();
+            string profilePath = buffer.ToString();
+
+            if (!Uri.TryCreate(profilePath, UriKind.Absolute, out var profileUri))
+            {
+                // GetStandardColorSpaceProfile() returns whatever was given to SetStandardColorSpaceProfile().
+                // If it were set to a relative path by the user, we should throw an exception to avoid any possible
+                // security issues. However, the Vista control panel uses the same API and sometimes likes to set
+                // relative paths. Since we can't tell the difference and we want people to be able to change
+                // their color profile from the control panel, we'll tack on the system directory.
+
+                length = 1024;
+                buffer = new StringBuilder(length);
+                success = GetColorDirectory(IntPtr.Zero, buffer, out length);
+                if (!success) throw new Win32Exception();
+                string colorDir = buffer.ToString();
+
+                profilePath = Path.Combine(colorDir, profilePath);
+            }
+
+            var profileBytes = File.ReadAllBytes(profilePath);
+            return OpenProfile(profileBytes);
+        }
+
+        public class SafeTransformHandle : Microsoft.Win32.SafeHandles.SafeHandleZeroOrMinusOneIsInvalid
+        {
+            public SafeTransformHandle() : base(true)
+            {
+            }
+
+            protected override bool ReleaseHandle()
+            {
+                return DeleteColorTransform(handle);
+            }
+        }
+
+        public class SafeProfileHandle : Microsoft.Win32.SafeHandles.SafeHandleZeroOrMinusOneIsInvalid
+        {
+            public SafeProfileHandle() : base(true)
+            {
+            }
+
+            protected override bool ReleaseHandle()
+            {
+                return CloseColorProfile(handle);
+            }
+        }
+
+        enum ProfileType : uint
+        {
+            PROFILE_FILENAME = 1,
+            PROFILE_MEMBUFFER = 2
+        };
+
+        [StructLayout(LayoutKind.Sequential)]
+        unsafe struct PROFILE
+        {
+            public ProfileType dwType; // profile type
+            public void* pProfileData;         // either the filename of the profile or buffer containing profile depending upon dwtype
+            public uint cbDataSize;           // size in bytes of pProfileData
+        };
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct LOGCOLORSPACE
+        {
+            public uint lcsSignature;
+            public uint lcsVersion;
+            public ColorSpaceType lcsCSType;
+            public Bv5Intent lcsIntent;
+            public uint lcsEndpoints_1x;
+            public uint lcsEndpoints_1y;
+            public uint lcsEndpoints_1z;
+            public uint lcsEndpoints_2x;
+            public uint lcsEndpoints_2y;
+            public uint lcsEndpoints_2z;
+            public uint lcsEndpoints_3x;
+            public uint lcsEndpoints_3y;
+            public uint lcsEndpoints_3z;
+            public uint lcsGammaRed;
+            public uint lcsGammaGreen;
+            public uint lcsGammaBlue;
+            public string lcsFilename;
+        }
+
+        enum COLOR_TYPE : uint
+        {
+            COLOR_GRAY = 1,
+            COLOR_RGB,
+            COLOR_XYZ,
+            COLOR_Yxy,
+            COLOR_Lab,
+            COLOR_3_CHANNEL,        // WORD per channel
+            COLOR_CMYK,
+            COLOR_5_CHANNEL,        // BYTE per channel
+            COLOR_6_CHANNEL,        //      - do -
+            COLOR_7_CHANNEL,        //      - do -
+            COLOR_8_CHANNEL,        //      - do -
+            COLOR_NAMED,
+        }
+
+        //[StructLayout(LayoutKind.Explicit)]
+        //struct COLOR
+        //{
+        //    [FieldOffset(0)]
+        //    public ushort rgb_red;
+
+        //    [FieldOffset(2)]
+        //    public ushort rgb_green;
+
+        //    [FieldOffset(4)]
+        //    public ushort rgb_blue;
+
+        //    [FieldOffset(0)]
+        //    public IntPtr reserved;
+
+        //    //[FieldOffset(0)]
+        //    //public IntPtr reserved;
+        //}
+
+        //[StructLayout(LayoutKind.Sequential)]
+        //unsafe struct COLOR
+        //{
+        //    public ushort gray;
+
+        //    public ushort rgb_red;
+        //    public ushort rgb_green;
+        //    public ushort rgb_blue;
+
+        //    public ushort cmyk_cyan;
+        //    public ushort cmyk_magenta;
+        //    public ushort cmyk_yellow;
+        //    public ushort cmyk_black;
+
+        //    public ushort xyz_X;
+        //    public ushort xyz_Y;
+        //    public ushort xyz_Z;
+
+        //    public ushort yxy_Y;
+        //    public ushort yxy_x;
+        //    public ushort yxy_y;
+
+        //    public ushort Lab_L;
+        //    public ushort Lab_a;
+        //    public ushort Lab_b;
+
+        //    public ushort generic3_ch1;
+        //    public ushort generic3_ch2;
+        //    public ushort generic3_ch3;
+
+        //    public uint namedColorIndex;
+
+        //    public byte hifi_ch1;
+        //    public byte hifi_ch2;
+        //    public byte hifi_ch3;
+        //    public byte hifi_ch4;
+        //    public byte hifi_ch5;
+        //    public byte hifi_ch6;
+        //    public byte hifi_ch7;
+        //    public byte hifi_ch8;
+
+        //    public uint reserved1;
+        //    public void* reserved2;
+        //}
+
+        public enum mscmsIntent : uint
+        {
+            INTENT_PERCEPTUAL = 0,
+            INTENT_RELATIVE_COLORIMETRIC = 1,
+            INTENT_SATURATION = 2,
+            INTENT_ABSOLUTE_COLORIMETRIC = 3,
+        }
+
+        public enum mscmsPxFormat : uint
+        {
+            //
+            // 16bpp - 5 bits per channel. The most significant bit is ignored.
+            //
+
+            BM_x555RGB = 0x0000,
+            BM_x555XYZ = 0x0101,
+            BM_x555Yxy,
+            BM_x555Lab,
+            BM_x555G3CH,
+
+            //
+            // Packed 8 bits per channel => 8bpp for GRAY and
+            // 24bpp for the 3 channel colors, more for hifi channels
+            //
+
+            BM_RGBTRIPLETS = 0x0002,
+            BM_BGRTRIPLETS = 0x0004,
+            BM_XYZTRIPLETS = 0x0201,
+            BM_YxyTRIPLETS,
+            BM_LabTRIPLETS,
+            BM_G3CHTRIPLETS,
+            BM_5CHANNEL,
+            BM_6CHANNEL,
+            BM_7CHANNEL,
+            BM_8CHANNEL,
+            BM_GRAY,
+
+            //
+            // 32bpp - 8 bits per channel. The most significant byte is ignored
+            // for the 3 channel colors.
+            //
+
+            BM_xRGBQUADS = 0x0008,
+            BM_xBGRQUADS = 0x0010,
+            BM_xG3CHQUADS = 0x0304,
+            BM_KYMCQUADS,
+            BM_CMYKQUADS = 0x0020,
+
+            //
+            // 32bpp - 10 bits per channel. The 2 most significant bits are ignored.
+            //
+
+            BM_10b_RGB = 0x0009,
+            BM_10b_XYZ = 0x0401,
+            BM_10b_Yxy,
+            BM_10b_Lab,
+            BM_10b_G3CH,
+
+            //
+            // 32bpp - named color indices (1-based)
+            //
+
+            BM_NAMED_INDEX,
+
+            //
+            // Packed 16 bits per channel => 16bpp for GRAY and
+            // 48bpp for the 3 channel colors.
+            //
+
+            BM_16b_RGB = 0x000A,
+            BM_16b_XYZ = 0x0501,
+            BM_16b_Yxy,
+            BM_16b_Lab,
+            BM_16b_G3CH,
+            BM_16b_GRAY,
+
+            //
+            // 16 bpp - 5 bits for Red & Blue, 6 bits for Green
+            //
+
+            BM_565RGB = 0x0001,
+
+            //#if NTDDI_VERSION >= NTDDI_VISTA
+            //
+            // scRGB - 32 bits per channel floating point
+            //         16 bits per channel floating point
+            //
+
+            BM_32b_scRGB = 0x0601,
+            BM_32b_scARGB = 0x0602,
+            BM_S2DOT13FIXED_scRGB = 0x0603,
+            BM_S2DOT13FIXED_scARGB = 0x0604,
+            //#endif // NTDDI_VERSION >= NTDDI_VISTA
+
+            //#if NTDDI_VERSION >= NTDDI_WIN7
+            BM_R10G10B10A2 = 0x0701,
+            BM_R10G10B10A2_XR = 0x0702,
+            BM_R16G16B16A16_FLOAT = 0x0703
+            //#endif // NTDDI_VERSION >= NTDDI_WIN7
+        }
     }
 }

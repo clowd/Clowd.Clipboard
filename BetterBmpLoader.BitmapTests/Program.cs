@@ -17,8 +17,17 @@ namespace BetterBmpLoader.BitmapTests
         const string htmlPage = "render.html";
         const string outputDir = "output";
 
-        static void Main(string[] args)
+        static unsafe void Main(string[] args)
         {
+            //var asde = IntPtr.Size;
+            //mscms.SafeProfileHandle prof;
+            //var profFile = File.ReadAllBytes("bitmaps\\rgb24prof2.bmp");
+            //fixed (byte* profPtr = profFile)
+            //{
+            //    BitmapCore.ReadHeader(profPtr, profFile.Length, out var info);
+            //    prof = info.colorProfile;
+            //}
+
             if (Directory.Exists(outputDir)) Directory.Delete(outputDir, true);
             Directory.CreateDirectory(outputDir);
 
@@ -43,7 +52,7 @@ namespace BetterBmpLoader.BitmapTests
             }
 
             File.AppendAllText(htmlPage, "</table></body></html>");
-            //Process.Start("render.html");
+            Process.Start("render.html");
             //Console.Read();
         }
 
@@ -62,7 +71,7 @@ namespace BetterBmpLoader.BitmapTests
             {
                 string suffix = "_wpf";
                 var roundPath = Path.Combine(outputDir, name + suffix + ".bmp");
-                var bmp = BitmapWpf.Read(originalBytes, BitmapWpfParserFlags.PreserveInvalidAlphaChannel);
+                var bmp = BitmapWpf.Read(originalBytes, BitmapWpfReaderFlags.PreserveInvalidAlphaChannel);
                 File.WriteAllBytes(roundPath, BitmapWpf.GetBytes(bmp, BitmapWpfWriterFlags.None));
 
                 var pngPath = Path.Combine(outputDir, name + suffix + ".png");
@@ -85,7 +94,7 @@ namespace BetterBmpLoader.BitmapTests
             {
                 string suffix = "_gdi";
                 var roundPath = Path.Combine(outputDir, name + suffix + ".bmp");
-                var bmp = BitmapGdi.Read(originalBytes, BitmapGdiParserFlags.PreserveInvalidAlphaChannel);
+                var bmp = BitmapGdi.Read(originalBytes, BitmapGdiReaderFlags.PreserveInvalidAlphaChannel);
                 File.WriteAllBytes(roundPath, BitmapGdi.GetBytes(bmp, BitmapGdiWriterFlags.None)); // not yet supported
 
                 //error += bmp.PixelFormat.ToString();
