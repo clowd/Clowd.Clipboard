@@ -261,7 +261,7 @@ namespace Clowd.BmpLib
                             maskB = 0x001f;
                             maskG = 0x03e0;
                             maskR = 0x7c00;
-                            // we could check for transparency in 16b RGB but it is slower and is very uncommon
+                            // we can check for transparency in 16b RGB but it is slower and is very uncommon
                             // maskA = 0x8000; // fake transparency?
                             break;
                     }
@@ -283,14 +283,17 @@ namespace Clowd.BmpLib
                     throw new NotSupportedException($"Bitmap with bV5Compression of '{bi.bV5Compression.ToString()}' is not supported.");
             }
 
-            // lets use the v3/v4/v5 masks if present instead of BITFIELDS or RGB
-            if (bi.bV5Size >= 52)
+            // lets use the v3/v4/v5 masks if present instead of RGB
+            // according to some readers (FIREFOX!) these masks are only valid if the compression mode is 
+            // BI_BITFIELDS, meaning they might write garbage here when the compression is RGB
+            if (bi.bV5Size >= 52 && bi.bV5Compression == BitmapCompressionMode.BI_BITFIELDS)
             {
                 if (bi.bV5RedMask != 0) maskR = bi.bV5RedMask;
                 if (bi.bV5BlueMask != 0) maskB = bi.bV5BlueMask;
                 if (bi.bV5GreenMask != 0) maskG = bi.bV5GreenMask;
             }
 
+            // if an alpha mask has been provided in the header, lets use it.
             if (bi.bV5Size >= 56 && bi.bV5AlphaMask != 0)
             {
                 maskA = bi.bV5AlphaMask;
