@@ -53,7 +53,7 @@ namespace Clowd.BmpLib.BitmapTests
 
         static void WriteTableLine(string file, string defaultReferenceFile = null)
         {
-            if (!(file.Contains("clip") && file.EndsWith(".bmp")))
+            if (!(/*file.Contains("clip") &&*/ file.EndsWith(".bmp")))
                 return;
 
             var name = Path.GetFileNameWithoutExtension(file);

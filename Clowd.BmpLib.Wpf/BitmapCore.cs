@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -222,37 +222,15 @@ namespace Clowd.BmpLib
             switch (bi.bV5Compression)
             {
                 case BitmapCompressionMode.BI_BITFIELDS:
-                    // larger headers contain the BI_BITFIELDS masks within them and are not expected to write them after the header
-                    if (header_size > 40)
-                        break;
 
-                    // 3 x u32 if OS2v1 or WindowsV2
-                    // 4 x u32 if any other version??? find anywhere to confirm this?
-
-                    if (is_os21x_)
-                    {
-                        var rgb = StructUtil.Deserialize<MASKTRIPLE>(ptr);
-                        maskR = rgb.rgbRed;
-                        maskG = rgb.rgbGreen;
-                        maskB = rgb.rgbBlue;
-                        offset += Marshal.SizeOf<MASKTRIPLE>();
-                    }
-                    else
-                    {
-                        var rgb = StructUtil.Deserialize<MASKQUAD>(ptr);
-                        maskR = rgb.rgbRed;
-                        maskG = rgb.rgbGreen;
-                        maskB = rgb.rgbBlue;
-                        // we ignore the alpha mask here as it's invalid with BI_BITFIELDS
-                        offset += Marshal.SizeOf<MASKQUAD>();
-                    }
+                    var rgb = StructUtil.Deserialize<MASKTRIPLE>(ptr);
+                    maskR = rgb.rgbRed;
+                    maskG = rgb.rgbGreen;
+                    maskB = rgb.rgbBlue;
+                    offset += Marshal.SizeOf<MASKTRIPLE>();
 
                     break;
                 case BitmapCompressionMode.BI_ALPHABITFIELDS:
-
-                    // larger headers contain the BI_BITFIELDS masks within them and are not expected to write them after the header
-                    if (header_size > 40)
-                        break;
 
                     var rgba = StructUtil.Deserialize<MASKQUAD>(ptr);
                     maskR = rgba.rgbRed;
@@ -319,6 +297,8 @@ namespace Clowd.BmpLib
                 hasAlphaChannel = true;
             }
 
+            // try to infer alpha if 32bpp & no alpha mask was set (ie, BI_BITFIELDS)
+            // this will only be used if the PRESERVE_FAKE_ALPHA flag is set
             if (maskA == 0 && nbits == 32)
             {
                 maskA = (maskB | maskG | maskR) ^ 0xFFFFFFFF;
@@ -342,9 +322,6 @@ namespace Clowd.BmpLib
             if (bi.bV5ClrUsed > 0)
                 pallength = (int)bi.bV5ClrUsed;
 
-            //var bitsperpal = is_os21x_ ? 3 : 4;
-            //var palmax = (data.Length - offset - bi.bV5SizeImage) / bitsperpal;
-
             if (pallength > 256) // technically the max is 256..? some bitmaps have invalidly/absurdly large palettes
             {
                 if (hasFileHeader)
@@ -367,13 +344,12 @@ namespace Clowd.BmpLib
                 {
                     var small = StructUtil.Deserialize<RGBTRIPLE>(ptr);
                     palette[i] = new RGBQUAD { rgbBlue = small.rgbBlue, rgbGreen = small.rgbGreen, rgbRed = small.rgbRed };
-                    ptr += clrSize;
                 }
                 else
                 {
                     palette[i] = StructUtil.Deserialize<RGBQUAD>(ptr);
-                    ptr += clrSize;
                 }
+                ptr += clrSize;
             }
 
             offset += pallength * clrSize;
