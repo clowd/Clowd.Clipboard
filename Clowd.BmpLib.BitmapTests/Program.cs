@@ -28,32 +28,48 @@ namespace Clowd.BmpLib.BitmapTests
 
             File.AppendAllText(htmlPage, "<tr><th>FILENAME</th><th>REFERENCE</th><th>WPF</th><th>GDI</th><th>ERROR</th></tr>");
 
-            foreach (var file in Directory.EnumerateFiles("bitmaps", "*.bmp", SearchOption.TopDirectoryOnly).OrderBy(k => k))
+            foreach (var file in Directory.EnumerateFiles("bitmaps", "*", SearchOption.TopDirectoryOnly).OrderBy(k => k))
             {
-                //if (!file.Contains("rgba32")) continue;
                 WriteTableLine(file);
+            }
+
+            File.AppendAllText(htmlPage, "</table><br/><br/><span>Images copied from the clipboard</span><br/><br/><table>");
+
+            foreach (var file in Directory.EnumerateFiles("clipboard", "*", SearchOption.TopDirectoryOnly).OrderBy(k => k))
+            {
+                WriteTableLine(file, "bitmaps\\rgba32-1.bmp");
             }
 
             File.AppendAllText(htmlPage, "</table><br/><br/><span>Known bad images are below. We are testing these to make sure we do not cause any fatal memory violations</span><br/><br/><table>");
 
-            foreach (var file in Directory.EnumerateFiles("known_bad", "*.bmp", SearchOption.TopDirectoryOnly).OrderBy(k => k))
+            foreach (var file in Directory.EnumerateFiles("known_bad", "*", SearchOption.TopDirectoryOnly).OrderBy(k => k))
             {
                 WriteTableLine(file);
             }
 
             File.AppendAllText(htmlPage, "</table></body></html>");
-            Process.Start("render.html");
+            //Process.Start("render.html");
         }
 
-        static void WriteTableLine(string file)
+        static void WriteTableLine(string file, string defaultReferenceFile = null)
         {
+            if (!(file.Contains("clip") && file.EndsWith(".bmp")))
+                return;
+
             var name = Path.GetFileNameWithoutExtension(file);
             var bmpPath = Path.Combine(outputDir, name + ".bmp");
+            var refPath = file.Substring(0, file.Length - 4) + ".png";
+            var refTargetPath = Path.Combine(outputDir, name + ".png");
             string error = "";
+
+            if (File.Exists(refPath))
+                File.Copy(refPath, refTargetPath);
+            else if (defaultReferenceFile != null)
+                refTargetPath = defaultReferenceFile;
 
             File.Copy(file, bmpPath);
             var originalBytes = File.ReadAllBytes(file);
-            File.AppendAllText(htmlPage, $"<tr> <td>{name}</td> <td><img src=\"{bmpPath.Replace("\\", "/")}\" /><br/><br/><img src=\"{bmpPath.Replace("\\", "/")}\" /></td>");
+            File.AppendAllText(htmlPage, $"<tr> <td>{name}</td> <td><img src=\"{refTargetPath.Replace("\\", "/")}\" /><br/><br/><img src=\"{bmpPath.Replace("\\", "/")}\" /></td>");
 
             // WPF
             try

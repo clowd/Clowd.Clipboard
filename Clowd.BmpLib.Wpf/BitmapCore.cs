@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -312,10 +312,16 @@ namespace Clowd.BmpLib
                 if (bi.bV5BlueMask != 0) maskB = bi.bV5BlueMask;
                 if (bi.bV5GreenMask != 0) maskG = bi.bV5GreenMask;
             }
+
             if (bi.bV5Size >= 56 && bi.bV5AlphaMask != 0)
             {
                 maskA = bi.bV5AlphaMask;
                 hasAlphaChannel = true;
+            }
+
+            if (maskA == 0 && nbits == 32)
+            {
+                maskA = (maskB | maskG | maskR) ^ 0xFFFFFFFF;
             }
 
             bool smBit = nbits == 1 || nbits == 2 || nbits == 4 || nbits == 8;
