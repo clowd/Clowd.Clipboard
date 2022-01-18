@@ -1,15 +1,22 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29806.167
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clowd.Bitmaps.Wpf", "Clowd.Bitmaps.Wpf\Clowd.Bitmaps.Wpf.csproj", "{48445023-227A-4369-A7E6-64AABC099BEB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Clowd.Bitmaps.Wpf", "Clowd.Bitmaps.Wpf\Clowd.Bitmaps.Wpf.csproj", "{48445023-227A-4369-A7E6-64AABC099BEB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clowd.Bitmaps.Gdi", "Clowd.Bitmaps.Gdi\Clowd.Bitmaps.Gdi.csproj", "{5E33B97E-C546-482F-B17C-7AA7337929AA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Clowd.Bitmaps.Gdi", "Clowd.Bitmaps.Gdi\Clowd.Bitmaps.Gdi.csproj", "{5E33B97E-C546-482F-B17C-7AA7337929AA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clowd.Bitmaps.BitmapTests", "Clowd.Bitmaps.BitmapTests\Clowd.Bitmaps.BitmapTests.csproj", "{BB566490-89AC-4710-B6E1-F37E01B11A9D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Clowd.Bitmaps.BitmapTests", "Clowd.Bitmaps.BitmapTests\Clowd.Bitmaps.BitmapTests.csproj", "{BB566490-89AC-4710-B6E1-F37E01B11A9D}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Clowd.Bitmaps.Shared", "Clowd.Bitmaps.Shared\Clowd.Bitmaps.Shared.shproj", "{471A2ECD-8E11-45F8-8022-C9411241BE43}"
 EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Clowd.Bitmaps.Shared\Clowd.Bitmaps.Shared.projitems*{471a2ecd-8e11-45f8-8022-c9411241be43}*SharedItemsImports = 13
+		Clowd.Bitmaps.Shared\Clowd.Bitmaps.Shared.projitems*{48445023-227a-4369-a7e6-64aabc099beb}*SharedItemsImports = 5
+		Clowd.Bitmaps.Shared\Clowd.Bitmaps.Shared.projitems*{5e33b97e-c546-482f-b17c-7aa7337929aa}*SharedItemsImports = 5
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
