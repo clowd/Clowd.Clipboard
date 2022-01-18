@@ -1,10 +1,10 @@
 ## Clowd.BmpLib
-The purpose of this library is to provide a significantly more robust Bmp/Dib parser than currently exists in WPF or in System.Drawing (GDI+). It's initial purpose was to provide good interop with packed dibs on the Windows Clipboard. 
+The purpose of this library is to attempt to create a more robust BMP/DIB parser than currently exists in WPF or in System.Drawing (GDI+). It's initial purpose was to provide good interop with packed dibs on the Windows Clipboard. 
 
-There are two big barriers to reading Bitmap's on the clipboard; Both `CF_DIB` and `CF_DIBV5` are available, but they lack `BITMAPFILEHEADER`'s. Additionally, WPF and GDI do not support the `BITMAPV5HEADER` present in `CF_DIBV5` and therefore can not properly read transparency. This library has been tested with a variety of weird, rare, invalid bitmap files and supports every bitmap reference file I could come across - including rare reader formats (like OS2v1, OS2v2) and rare  compression like RLE and Huffman1D.
+There are two big barriers to reading Bitmap's on the clipboard; Both `CF_DIB` and `CF_DIBV5` are available, but they lack `BITMAPFILEHEADER`'s. Additionally, WPF and GDI do not support the `BITMAPV5HEADER` present in `CF_DIBV5` and therefore can not properly read transparency data. This library has been tested with a variety of weird, rare, invalid bitmap files and supports every bitmap reference file I could come across - including rare reader formats (like OS2v1, OS2v2) and rare compression algorithms like RLE and Huffman1D.
 
 ### When should I use this library?
-If you have a need to read or write bitmaps to the windows clipboard, or if you need excellent compatibility with bitmaps written by other native applications, this library will do a much better job than GDI or WPF.
+If you have a need to read or write bitmaps to the windows clipboard, or if you need excellent compatibility with bitmaps written by other native applications, this library may possibly do a better job than GDI or WPF.
 
 ### How do I get it?
 
@@ -20,11 +20,11 @@ If you have a need to read or write bitmaps to the windows clipboard, or if you 
 There is a convenient to use wrapper for both GDI and WPF, depending on your choice of UI technology.
 ```cs
 byte[] imageBytes = File.ReadAllBytes("file.bmp");
-BitmapSource bitmap = BitmapWpf.Read(imageBytes, BitmapWpfReaderFlags.PreserveInvalidAlphaChannel);
+BitmapSource bitmap = BitmapWpf.FromBytes(imageBytes, BitmapWpfReaderFlags.PreserveInvalidAlphaChannel);
 
 // profit!
 
-byte[] imageBytes2 = BitmapWpf.GetBytes(bitmap);
+byte[] imageBytes2 = BitmapWpf.ToBytes(bitmap);
 ```
 
 ### Compatibility
