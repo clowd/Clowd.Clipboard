@@ -1,3 +1,4 @@
+using Clowd.Bitmaps.Core;
 using System.ComponentModel;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -98,7 +99,7 @@ internal class BitmapWpfInternal
 
     public static unsafe byte[] GetBytes(BitmapSource bitmap, uint bcrFlags)
     {
-        uint stride = BitmapCore.calc_stride((ushort)bitmap.Format.BitsPerPixel, bitmap.PixelWidth);
+        uint stride = StructUtil.CalcStride((ushort)bitmap.Format.BitsPerPixel, bitmap.PixelWidth);
 
         byte[] buffer = new byte[stride * bitmap.PixelHeight];
         bitmap.CopyPixels(buffer, (int)stride, 0);

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
@@ -73,8 +74,8 @@ namespace Clowd.Bitmaps.BitmapTests
             {
                 string suffix = "_wpf";
                 var roundPath = Path.Combine(outputDir, name + suffix + ".bmp");
-                var bmp = BitmapWpf.Read(originalBytes, BitmapWpfReaderFlags.PreserveInvalidAlphaChannel);
-                File.WriteAllBytes(roundPath, BitmapWpf.GetBytes(bmp, BitmapWpfWriterFlags.None));
+                var bmp = BitmapWpf.FromBytes(originalBytes, BitmapReaderFlags.PreserveInvalidAlphaChannel);
+                File.WriteAllBytes(roundPath, BitmapWpf.ToBytes(bmp, BitmapWriterFlags.None));
 
                 var pngPath = Path.Combine(outputDir, name + suffix + ".png");
                 var pngEncoder = new PngBitmapEncoder();
@@ -96,8 +97,8 @@ namespace Clowd.Bitmaps.BitmapTests
             {
                 string suffix = "_gdi";
                 var roundPath = Path.Combine(outputDir, name + suffix + ".bmp");
-                var bmp = BitmapGdi.Read(originalBytes, BitmapGdiReaderFlags.PreserveInvalidAlphaChannel);
-                File.WriteAllBytes(roundPath, BitmapGdi.GetBytes(bmp, BitmapGdiWriterFlags.None));
+                var bmp = BitmapGdi.FromBytes(originalBytes, BitmapReaderFlags.PreserveInvalidAlphaChannel);
+                File.WriteAllBytes(roundPath, BitmapGdi.ToBytes(bmp, BitmapWriterFlags.None));
 
                 var pngPath = Path.Combine(outputDir, name + suffix + ".png");
                 bmp.Save(pngPath, ImageFormat.Png);

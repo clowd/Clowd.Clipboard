@@ -4,6 +4,9 @@ using System.Text;
 
 namespace Clowd.Bitmaps.Core;
 
+#if NET5_0_OR_GREATER
+[System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
 internal class mscms
 {
     // https://docs.microsoft.com/en-us/windows/win32/api/icm/
