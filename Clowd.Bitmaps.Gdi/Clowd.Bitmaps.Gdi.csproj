@@ -3,22 +3,23 @@
   <PropertyGroup>
     <TargetFrameworks>net461;netstandard2.0;net5.0;net6.0</TargetFrameworks>
     <RootNamespace>Clowd.Bitmaps</RootNamespace>
-    <OutputType>Library</OutputType>
-    <LangVersion>10</LangVersion>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Authors>caesay</Authors>
-    <PackageProjectUrl>https://github.com/clowd/Clowd.Bitmaps</PackageProjectUrl>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <DefineConstants>$(DefineConstants);BMPGDI</DefineConstants>
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
   </PropertyGroup>
   
   <ItemGroup Condition=" $(TargetFramework) != 'net461' ">
     <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
   </ItemGroup>
-  
+
   <ItemGroup>
-    <ProjectReference Include="..\Clowd.Bitmaps.Core\Clowd.Bitmaps.Core.csproj" />
+    <ProjectReference Include="..\Clowd.Bitmaps.Core\Clowd.Bitmaps.Core.csproj" PrivateAssets="all" />
   </ItemGroup>
+
+  <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
+    <ItemGroup>
+      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
+    </ItemGroup>
+  </Target>
 
 </Project>
