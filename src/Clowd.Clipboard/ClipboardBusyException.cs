@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Clowd.ClipLib
+namespace Clowd.Clipboard
 {
     public class ClipboardBusyException : Exception
     {

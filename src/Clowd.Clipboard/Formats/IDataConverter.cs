@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 
-namespace Clowd.ClipLib.Formats
+namespace Clowd.Clipboard.Formats
 {
     public interface IDataConverter<T>
     {

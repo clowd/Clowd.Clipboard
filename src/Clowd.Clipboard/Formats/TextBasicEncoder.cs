@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace Clowd.ClipLib.Formats
+namespace Clowd.Clipboard.Formats
 {
     public abstract class TextBasicEncoder : BytesDataConverterBase<string>
     {

@@ -2,7 +2,7 @@
 using System.IO;
 using System.Windows.Media.Imaging;
 
-namespace Clowd.ClipLib.Formats
+namespace Clowd.Clipboard.Formats
 {
     public abstract class ImageWpfBasicEncoder : BytesDataConverterBase<BitmapSource>
     {

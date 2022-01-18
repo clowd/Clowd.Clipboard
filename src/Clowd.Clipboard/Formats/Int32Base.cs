@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows;
 
-namespace Clowd.ClipLib.Formats
+namespace Clowd.Clipboard.Formats
 {
     public abstract class Int32Base<T> : HandleDataConverterBase<T>
     {

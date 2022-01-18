@@ -1,4 +1,4 @@
-﻿using Clowd.ClipLib;
+﻿using Clowd.Clipboard;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

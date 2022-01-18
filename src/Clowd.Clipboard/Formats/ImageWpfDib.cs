@@ -3,7 +3,7 @@ using Clowd.Bitmaps.Core;
 using System;
 using System.Windows.Media.Imaging;
 
-namespace Clowd.ClipLib.Formats
+namespace Clowd.Clipboard.Formats
 {
     public unsafe class ImageWpfDib : BytesDataConverterBase<BitmapSource>
     {

@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Media.Imaging;
 
-namespace Clowd.ClipLib.Formats
+namespace Clowd.Clipboard.Formats
 {
     public class ImageWpfFileDrop : HandleDataConverterBase<BitmapSource>
     {

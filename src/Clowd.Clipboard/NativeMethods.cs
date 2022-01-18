@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Clowd.ClipLib
+namespace Clowd.Clipboard
 {
     internal class NativeMethods
     {

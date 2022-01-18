@@ -1,4 +1,4 @@
-﻿using Clowd.ClipLib.Formats;
+﻿using Clowd.Clipboard.Formats;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -8,7 +8,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Media.Imaging;
 
-namespace Clowd.ClipLib
+namespace Clowd.Clipboard
 {
     public class ClipboardFormat : IEquatable<ClipboardFormat>
     {

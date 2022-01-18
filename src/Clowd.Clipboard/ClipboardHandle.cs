@@ -1,5 +1,5 @@
 ﻿using Clowd.Bitmaps.Core;
-using Clowd.ClipLib.Formats;
+using Clowd.Clipboard.Formats;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -11,7 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
-namespace Clowd.ClipLib
+namespace Clowd.Clipboard
 {
     //public interface IClipboardHandle : IDisposable
     //{

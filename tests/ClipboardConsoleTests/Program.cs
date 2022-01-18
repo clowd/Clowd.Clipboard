@@ -1,4 +1,4 @@
-﻿using ClipboardGapWpf;
+﻿using Clowd.Clipboard;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -43,7 +43,7 @@ namespace ConsoleTests
                     Console.WriteLine(" - " + f.Name);
 
 
-                byte[] bytes;
+                //byte[] bytes;
                 Console.ReadLine();
                 //Stopwatch sw = new Stopwatch();
                 //sw.Start();
