@@ -320,8 +320,8 @@
     <Content Include="lcms2-x86.dll" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Clowd.Bitmaps\Clowd.Bitmaps.csproj" />
-    <ProjectReference Include="..\Clowd.Bitmaps.Gdi\Clowd.Bitmaps.Gdi.csproj" />
-    <ProjectReference Include="..\Clowd.Bitmaps.Wpf\Clowd.Bitmaps.Wpf.csproj" />
+    <ProjectReference Include="..\..\src\Clowd.Bitmaps\Clowd.Bitmaps.csproj" />
+    <ProjectReference Include="..\..\src\Clowd.Bitmaps.Gdi\Clowd.Bitmaps.Gdi.csproj" />
+    <ProjectReference Include="..\..\src\Clowd.Bitmaps.Wpf\Clowd.Bitmaps.Wpf.csproj" />
   </ItemGroup>
 </Project>
