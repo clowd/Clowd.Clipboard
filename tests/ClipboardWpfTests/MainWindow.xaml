@@ -71,7 +71,7 @@
                 <Image
                     x:Name="imgClip"
                     SnapsToDevicePixels="True"
-                    Stretch="None" />
+                    Stretch="Fill" />
             </Canvas>
         </Grid>
     </Grid>

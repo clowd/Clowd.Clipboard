@@ -33,7 +33,13 @@ namespace WpfTests
         protected override void OnContentRendered(EventArgs e)
         {
             base.OnContentRendered(e);
-            imgRef.Source = new BitmapImage(new Uri(ReferenceImagePath));
+
+            var bs = new BitmapImage(new Uri(ReferenceImagePath));
+            imgRef.Source = bs;
+
+            var tzoom = PresentationSource.FromVisual(this).CompositionTarget.TransformToDevice.M11;
+            imgRef.Width = bs.PixelWidth / tzoom;
+            imgRef.Height = bs.PixelHeight / tzoom;
         }
 
         private void LoadClipImg_Click(object sender, RoutedEventArgs e)
@@ -46,10 +52,12 @@ namespace WpfTests
 
                 if (img != null)
                 {
-                    imgClip.Width = img.PixelWidth;
-                    imgClip.Height = img.PixelHeight;
-                    Canvas.SetLeft(imgClip, (int)((imgCanvas.ActualWidth / 2) - (img.PixelWidth / 2)));
-                    Canvas.SetTop(imgClip, (int)((imgCanvas.ActualHeight / 2) - (img.PixelHeight / 2)));
+                    // undo wpf dpi to show image at actual size
+                    var tzoom = PresentationSource.FromVisual(this).CompositionTarget.TransformToDevice.M11;
+                    imgClip.Width = img.PixelWidth / tzoom;
+                    imgClip.Height = img.PixelHeight / tzoom;
+                    Canvas.SetLeft(imgClip, (int)((imgCanvas.ActualWidth / 2) - (imgClip.Width / 2)));
+                    Canvas.SetTop(imgClip, (int)((imgCanvas.ActualHeight / 2) - (imgClip.Height / 2)));
                 }
             }
         }
