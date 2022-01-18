@@ -1,13 +1,10 @@
-﻿using Clowd.BmpLib.Gdi;
-using Clowd.BmpLib.Wpf;
-using System;
-using System.Diagnostics;
+﻿using System;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Windows.Media.Imaging;
 
-namespace Clowd.BmpLib.BitmapTests
+namespace Clowd.Bitmaps.BitmapTests
 {
     class Program
     {

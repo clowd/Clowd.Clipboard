@@ -1,13 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  
   <PropertyGroup>
     <TargetFrameworks>net461;net5.0-windows;net6.0-windows</TargetFrameworks>
     <RootNamespace>Clowd.Bitmaps</RootNamespace>
     <OutputType>Library</OutputType>
     <UseWPF>true</UseWPF>
+    <LangVersion>10</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Authors>caesay</Authors>
     <PackageProjectUrl>https://github.com/clowd/Clowd.Bitmaps</PackageProjectUrl>
   </PropertyGroup>
+  
   <Import Project="..\Clowd.Bitmaps.Shared\Clowd.Bitmaps.Shared.projitems" Label="Shared" />
+  
 </Project>

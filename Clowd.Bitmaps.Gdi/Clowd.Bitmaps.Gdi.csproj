@@ -1,15 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  
   <PropertyGroup>
     <TargetFrameworks>net461;netstandard2.0;net5.0;net6.0</TargetFrameworks>
     <RootNamespace>Clowd.Bitmaps</RootNamespace>
     <OutputType>Library</OutputType>
+    <LangVersion>10</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Authors>caesay</Authors>
     <PackageProjectUrl>https://github.com/clowd/Clowd.Bitmaps</PackageProjectUrl>
   </PropertyGroup>
+  
   <Import Project="..\Clowd.Bitmaps.Shared\Clowd.Bitmaps.Shared.projitems" Label="Shared" />
+  
   <ItemGroup Condition=" $(TargetFramework) != 'net461' ">
     <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
   </ItemGroup>
+
 </Project>
