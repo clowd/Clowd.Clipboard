@@ -1,4 +1,8 @@
-﻿namespace Clowd.Bitmaps;
+﻿using System.ComponentModel;
+using System.Runtime.InteropServices;
+using System.Text;
+
+namespace Clowd.Bitmaps;
 
 // http://zig.tgschultz.com/bmp_file_format.txt
 // http://paulbourke.net/dataformats/bitmaps/

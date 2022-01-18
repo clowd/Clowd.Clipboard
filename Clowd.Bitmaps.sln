@@ -9,14 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Clowd.Bitmaps.Gdi", "Clowd.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Clowd.Bitmaps.BitmapTests", "Clowd.Bitmaps.BitmapTests\Clowd.Bitmaps.BitmapTests.csproj", "{BB566490-89AC-4710-B6E1-F37E01B11A9D}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Clowd.Bitmaps.Shared", "Clowd.Bitmaps.Shared\Clowd.Bitmaps.Shared.shproj", "{471A2ECD-8E11-45F8-8022-C9411241BE43}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Clowd.Bitmaps.Core", "Clowd.Bitmaps.Core\Clowd.Bitmaps.Core.csproj", "{227D8A65-A62D-45F6-8FE1-CC18B7154C0D}"
 EndProject
 Global
-	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		Clowd.Bitmaps.Shared\Clowd.Bitmaps.Shared.projitems*{471a2ecd-8e11-45f8-8022-c9411241be43}*SharedItemsImports = 13
-		Clowd.Bitmaps.Shared\Clowd.Bitmaps.Shared.projitems*{48445023-227a-4369-a7e6-64aabc099beb}*SharedItemsImports = 5
-		Clowd.Bitmaps.Shared\Clowd.Bitmaps.Shared.projitems*{5e33b97e-c546-482f-b17c-7aa7337929aa}*SharedItemsImports = 5
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -34,6 +29,10 @@ Global
 		{BB566490-89AC-4710-B6E1-F37E01B11A9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BB566490-89AC-4710-B6E1-F37E01B11A9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BB566490-89AC-4710-B6E1-F37E01B11A9D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{227D8A65-A62D-45F6-8FE1-CC18B7154C0D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{227D8A65-A62D-45F6-8FE1-CC18B7154C0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{227D8A65-A62D-45F6-8FE1-CC18B7154C0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{227D8A65-A62D-45F6-8FE1-CC18B7154C0D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

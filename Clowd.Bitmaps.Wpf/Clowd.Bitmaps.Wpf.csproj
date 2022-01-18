@@ -9,10 +9,14 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Authors>caesay</Authors>
+    <ImplicitUsings>true</ImplicitUsings>
     <PackageProjectUrl>https://github.com/clowd/Clowd.Bitmaps</PackageProjectUrl>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DefineConstants>$(DefineConstants);BMPWPF</DefineConstants>
   </PropertyGroup>
   
-  <Import Project="..\Clowd.Bitmaps.Shared\Clowd.Bitmaps.Shared.projitems" Label="Shared" />
+  <ItemGroup>
+    <ProjectReference Include="..\Clowd.Bitmaps.Core\Clowd.Bitmaps.Core.csproj" />
+  </ItemGroup>
   
 </Project>

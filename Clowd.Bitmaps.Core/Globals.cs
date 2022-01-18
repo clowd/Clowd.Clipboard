@@ -4,6 +4,7 @@ global using global::System.IO;
 global using global::System.Linq;
 global using global::System.Threading;
 global using global::System.Threading.Tasks;
-global using global::System.ComponentModel;
-global using global::System.Runtime.InteropServices;
-global using global::System.Text;
+
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("Clowd.Bitmaps.Gdi")]
+[assembly: InternalsVisibleTo("Clowd.Bitmaps.Wpf")]
