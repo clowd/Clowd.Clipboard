@@ -36,7 +36,7 @@ namespace Clowd.Clipboard
 
         // STANDARD FORMATS
         public static readonly ClipboardFormat<string> Text = DefaultFormat(CF_TEXT, "Text", new TextAnsi());
-        public static readonly ClipboardFormat Bitmap = DefaultFormat(CF_BITMAP, "Bitmap");
+        public static readonly ClipboardFormat<BitmapSource> Bitmap = DefaultFormat(CF_BITMAP, "Bitmap", new ImageBitmap());
         public static readonly ClipboardFormat MetafilePict = DefaultFormat(CF_METAFILEPICT, "MetaFilePict");
         public static readonly ClipboardFormat SymbolicLink = DefaultFormat(CF_SYLK, "SymbolicLink");
         public static readonly ClipboardFormat DataInterchangeFormat = DefaultFormat(CF_DIF, "DataInterchangeFormat");

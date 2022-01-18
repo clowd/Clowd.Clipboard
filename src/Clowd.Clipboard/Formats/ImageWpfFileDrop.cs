@@ -41,7 +41,7 @@ namespace Clowd.Clipboard.Formats
 
         public override void WriteToHandle(BitmapSource obj, IntPtr ptr)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
     }
 }
