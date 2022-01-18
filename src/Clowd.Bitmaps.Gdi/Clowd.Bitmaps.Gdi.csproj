@@ -5,7 +5,6 @@
     <RootNamespace>Clowd.Bitmaps</RootNamespace>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
   </PropertyGroup>
   
   <ItemGroup Condition=" $(TargetFramework) != 'net461' ">
@@ -13,13 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Clowd.Bitmaps\Clowd.Bitmaps.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\Clowd.Bitmaps\Clowd.Bitmaps.csproj" />
   </ItemGroup>
-
-  <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
-    <ItemGroup>
-      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths-&gt;WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
-    </ItemGroup>
-  </Target>
 
 </Project>
