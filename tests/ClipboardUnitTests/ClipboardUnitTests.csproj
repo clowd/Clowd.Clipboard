@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <RootNamespace>ClipboardGapWpf.Tests</RootNamespace>
+    <AssemblyName>ClipboardGapWpf.Tests</AssemblyName>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="utf8.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="bitmapreadtest.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="bmp\pal1.bmp" />
+    <EmbeddedResource Include="bmp\pal1bg.bmp" />
+    <EmbeddedResource Include="bmp\pal4.bmp" />
+    <EmbeddedResource Include="bmp\pal8.bmp" />
+    <EmbeddedResource Include="bmp\pal8v5.bmp" />
+    <EmbeddedResource Include="bmp\pal8w124.bmp" />
+    <EmbeddedResource Include="bmp\pal8w125.bmp" />
+    <EmbeddedResource Include="bmp\pal8w126.bmp" />
+    <EmbeddedResource Include="bmp\rgb16-565.bmp" />
+    <EmbeddedResource Include="bmp\rgb16-565pal.bmp" />
+    <EmbeddedResource Include="bmp\rgb16.bmp" />
+    <EmbeddedResource Include="bmp\rgb16bfdef.bmp" />
+    <EmbeddedResource Include="bmp\rgb24.bmp" />
+    <EmbeddedResource Include="bmp\rgb24pal.bmp" />
+    <EmbeddedResource Include="bmp\rgb32-7187.bmp" />
+    <EmbeddedResource Include="bmp\rgb32.bmp" />
+    <EmbeddedResource Include="bmp\rgb32bf.bmp" />
+    <EmbeddedResource Include="bmp\rgb32bfdef.bmp" />
+    <EmbeddedResource Include="bmp\rgba32-1.bmp" />
+    <EmbeddedResource Include="bmp\rgba32-2.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.*" />
+    <PackageReference Include="MSTest.TestFramework" Version="1.3.2" />
+    <PackageReference Include="MSTest.TestAdapter" Version="2.2.8" />
+    <PackageReference Include="Microsoft.DotNet.UpgradeAssistant.Extensions.Default.Analyzers" Version="0.3.261602">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="6.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Clowd.Clipboard\Clowd.Clipboard.csproj" />
+  </ItemGroup>
+</Project>

@@ -8,3 +8,4 @@ global using global::System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Clowd.Bitmaps.Gdi")]
 [assembly: InternalsVisibleTo("Clowd.Bitmaps.Wpf")]
+[assembly: InternalsVisibleTo("Clowd.Clipboard")]

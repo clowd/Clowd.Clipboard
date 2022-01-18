@@ -1,0 +1,78 @@
+﻿<Window
+    x:Class="WpfTests.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:WpfTests"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="WpfTests Clipboard Tester"
+    Width="800"
+    Height="450"
+    Topmost="True"
+    mc:Ignorable="d">
+    <Window.Resources>
+        <Style x:Key="BtnStyle" TargetType="Button">
+            <Setter Property="Margin" Value="5" />
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="127" />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <StackPanel>
+            <Button
+                Click="LoadClipImg_Click"
+                Content="Load Clip Img"
+                Style="{StaticResource BtnStyle}" />
+        </StackPanel>
+        <Grid VerticalAlignment="Bottom">
+            <StackPanel>
+                <Button
+                    Click="CopyRefImg_Click"
+                    Content="Copy Ref Img"
+                    Style="{StaticResource BtnStyle}" />
+                <Button
+                    Click="ShowRefImg_Click"
+                    Content="Show Ref Img"
+                    Style="{StaticResource BtnStyle}" />
+                <Border>
+                    <Border.Background>
+                        <DrawingBrush
+                            TileMode="Tile"
+                            Viewport="0,0,10,10"
+                            ViewportUnits="Absolute">
+                            <DrawingBrush.Drawing>
+                                <GeometryDrawing Brush="Gray" Geometry="M0,0 H1 V1 H2 V2 H1 V1 H0Z" />
+                            </DrawingBrush.Drawing>
+                        </DrawingBrush>
+                    </Border.Background>
+                    <Image
+                        x:Name="imgRef"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Bottom" />
+                </Border>
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Column="1">
+            <Border>
+                <Border.Background>
+                    <DrawingBrush
+                        TileMode="Tile"
+                        Viewport="0,0,10,10"
+                        ViewportUnits="Absolute">
+                        <DrawingBrush.Drawing>
+                            <GeometryDrawing Brush="Gray" Geometry="M0,0 H1 V1 H2 V2 H1 V1 H0Z" />
+                        </DrawingBrush.Drawing>
+                    </DrawingBrush>
+                </Border.Background>
+            </Border>
+            <Canvas x:Name="imgCanvas">
+                <Image
+                    x:Name="imgClip"
+                    SnapsToDevicePixels="True"
+                    Stretch="None" />
+            </Canvas>
+        </Grid>
+    </Grid>
+</Window>
