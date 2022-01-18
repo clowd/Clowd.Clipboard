@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+using System.Drawing;
 using System.Drawing.Imaging;
 
 namespace Clowd.Bitmaps;
@@ -67,6 +67,9 @@ public enum BitmapGdiWriterFlags : uint
 /// tries to do a better job than Gdi+ does in terms of coverage and it also tries to handle some nuances of how other native applications write bitmaps especially when
 /// reading from or writing to the clipboard.
 /// </summary>
+#if NET5_0_OR_GREATER
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
 public class BitmapGdi
 {
     public static Bitmap Read(Stream stream) => Read(StructUtil.ReadBytes(stream));

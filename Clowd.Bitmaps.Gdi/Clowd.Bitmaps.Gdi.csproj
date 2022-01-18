@@ -9,6 +9,7 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Authors>caesay</Authors>
     <PackageProjectUrl>https://github.com/clowd/Clowd.Bitmaps</PackageProjectUrl>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   
   <Import Project="..\Clowd.Bitmaps.Shared\Clowd.Bitmaps.Shared.projitems" Label="Shared" />
