@@ -11,8 +11,8 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Description>A lightweight windows clipboard and bitmap parsing library.</Description>
     <PackageTags>windows;clipboard;bitmaps;dib;parser;interop</PackageTags>
-    <!--<SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\..\Squirrel.snk</AssemblyOriginatorKeyFile>-->
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\Clowd.Clipboard.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
