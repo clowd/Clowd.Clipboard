@@ -6,10 +6,6 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
   
-  <ItemGroup>
-    <ProjectReference Include="..\Clowd.Bitmaps.Wpf\Clowd.Bitmaps.Wpf.csproj" />
-  </ItemGroup>
-
   <ItemGroup Condition=" $(TargetFramework) != 'net461' ">
     <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
   </ItemGroup>
