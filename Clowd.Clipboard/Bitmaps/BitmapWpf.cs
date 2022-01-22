@@ -1,7 +1,5 @@
-﻿using System.IO;
-using System.Windows.Media.Imaging;
+﻿using System.Windows.Media.Imaging;
 using Clowd.Clipboard.Bitmaps.Core;
-using Clowd.Clipboard.Bitmaps;
 
 namespace Clowd.Clipboard.Bitmaps;
 

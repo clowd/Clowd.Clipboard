@@ -1,7 +1,4 @@
-﻿using System.ComponentModel;
-using System.Runtime.InteropServices;
-using System.Text;
-using Clowd.Clipboard.Bitmaps.Core;
+﻿using System.Runtime.InteropServices;
 
 namespace Clowd.Clipboard.Bitmaps.Core;
 

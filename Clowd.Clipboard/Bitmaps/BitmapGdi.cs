@@ -1,8 +1,6 @@
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Linq;
 using Clowd.Clipboard.Bitmaps.Core;
-using Clowd.Clipboard.Bitmaps;
 
 namespace Clowd.Clipboard.Bitmaps;
 
@@ -11,9 +9,6 @@ namespace Clowd.Clipboard.Bitmaps;
 /// tries to do a better job than Gdi+ does in terms of coverage and it also tries to handle some nuances of how other native 
 /// applications write bitmaps especially when reading from or writing to the clipboard.
 /// </summary>
-#if NET5_0_OR_GREATER
-    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
 public unsafe class BitmapGdi : BitmapConverterStaticBase<BitmapGdi, Bitmap>
 {
     /// <inheritdoc/>
