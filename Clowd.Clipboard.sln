@@ -7,13 +7,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Clowd.Bitmaps.BitmapTests",
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FE8AE6E1-D42C-499A-9C8E-7E279C40B01A}"
 	ProjectSection(SolutionItems) = preProject
-		Directory.Build.props = Directory.Build.props
 		version.json = version.json
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{C8A1E9B5-1453-4059-85A8-6BFBD12414F1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Clowd.Clipboard", "src\Clowd.Clipboard\Clowd.Clipboard.csproj", "{8BFEF7F4-D577-467A-B0DD-F2DA28760013}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Clowd.Clipboard", "Clowd.Clipboard\Clowd.Clipboard.csproj", "{8BFEF7F4-D577-467A-B0DD-F2DA28760013}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClipboardConsoleTests", "tests\ClipboardConsoleTests\ClipboardConsoleTests.csproj", "{65FAC6E7-1DB3-4BAD-BF99-FDA7FA551C09}"
 EndProject

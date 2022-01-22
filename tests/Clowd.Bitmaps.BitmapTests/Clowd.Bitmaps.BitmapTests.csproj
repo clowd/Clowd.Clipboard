@@ -320,6 +320,6 @@
     <Content Include="lcms2-x86.dll" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Clowd.Clipboard\Clowd.Clipboard.csproj" />
+    <ProjectReference Include="..\..\Clowd.Clipboard\Clowd.Clipboard.csproj" />
   </ItemGroup>
 </Project>

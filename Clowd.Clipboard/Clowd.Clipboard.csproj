@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  
+  <PropertyGroup>
+    <TargetFrameworks>net461;net5.0-windows;net6.0-windows</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>10</LangVersion>
+    <Authors>caesay</Authors>
+    <PackageProjectUrl>https://github.com/clowd/Clowd.Clipboard</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Description>A lightweight windows clipboard and bitmap parsing library.</Description>
+    <PackageTags>windows;clipboard;bitmaps;dib;parser;interop</PackageTags>
+    <!--<SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\Squirrel.snk</AssemblyOriginatorKeyFile>-->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.4.*" PrivateAssets="All" />
+  </ItemGroup>
+  
+  <ItemGroup Condition=" $(TargetFramework) != 'net461' ">
+    <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
+  </ItemGroup>
+  
+</Project>

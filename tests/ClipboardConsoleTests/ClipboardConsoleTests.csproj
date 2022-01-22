@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
     <UseWPF>true</UseWPF>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="bitmapreadtest.png" />
@@ -16,6 +17,6 @@
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Clowd.Clipboard\Clowd.Clipboard.csproj" />
+    <ProjectReference Include="..\..\Clowd.Clipboard\Clowd.Clipboard.csproj" />
   </ItemGroup>
 </Project>
