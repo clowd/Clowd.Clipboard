@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Clowd.Clipboard.Bitmaps;
+using System;
 using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.IO;
