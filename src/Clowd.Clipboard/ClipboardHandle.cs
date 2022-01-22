@@ -188,7 +188,6 @@ namespace Clowd.Clipboard
             // also often will attempt to read PNG format first.
             SetFormat(ClipboardFormat.Png, bitmap);
             SetFormat(ClipboardFormat.DibV5, bitmap);
-            SetFormat(ClipboardFormat.Dib, bitmap);
         }
 
         public virtual BitmapSource GetImage()
@@ -200,14 +199,12 @@ namespace Clowd.Clipboard
 
             // Windows has "Synthesized Formats", if you ask for a CF_DIBV5 when there is only a CF_DIB, it will transparently convert
             // from one format to the other. The issue is, if you ask for a CF_DIBV5 before you ask for a CF_DIB, and the CF_DIB is 
-            // the only real format on the clipboard, windows corrupts the CF_DIB!!! 
+            // the only real format on the clipboard, windows can corrupt the CF_DIB!!! 
             // One quirk is that windows deterministically puts real formats in the list of present formats before it puts synthesized formats
             // so even though we can't really tell what is synthesized or not, we can make a guess based on which comes first.
 
-            // TODO: if CF_BITMAP comes first, we really ought to grab that instead...
-
-            foreach (var fmt in GetPresentFormats().Where(f => f is ClipboardFormat<BitmapSource>).Cast<ClipboardFormat<BitmapSource>>())
-                if (fmt == ClipboardFormat.Dib || fmt == ClipboardFormat.DibV5)
+            foreach (var fmt in GetPresentFormats().OfType<ClipboardFormat<BitmapSource>>())
+                if (fmt == ClipboardFormat.Bitmap || fmt == ClipboardFormat.Dib || fmt == ClipboardFormat.DibV5)
                     if (TryGetFormatObject(fmt.Id, fmt.TypeObjectReader, out var dib))
                         if (dib != null)
                             return dib;
@@ -233,7 +230,6 @@ namespace Clowd.Clipboard
             var fmtLegacyW = ClipboardFormat.FileNameW;
             var fmtLegacyA = ClipboardFormat.FileName;
 #pragma warning restore CS0612 // Type or member is obsolete
-
 
             if (TryGetFormatObject(fmtLegacyW.Id, fmtLegacyW.TypeObjectReader, out var legacyW))
                 if (legacyW != null)
