@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
+using Clowd.Clipboard.Bitmaps.Core;
 
-namespace Clowd.Bitmaps.Core;
+namespace Clowd.Clipboard.Bitmaps.Core;
 
 #if NET5_0_OR_GREATER
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]

@@ -1,7 +1,7 @@
-﻿using Clowd.Bitmaps;
-using Clowd.Bitmaps.Core;
-using System;
+﻿using System;
 using System.Windows.Media.Imaging;
+using Clowd.Clipboard.Bitmaps.Core;
+using Clowd.Clipboard.Bitmaps;
 
 namespace Clowd.Clipboard.Formats
 {

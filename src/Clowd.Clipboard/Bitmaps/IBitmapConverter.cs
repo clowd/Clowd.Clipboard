@@ -1,6 +1,7 @@
-﻿using Clowd.Bitmaps.Core;
+﻿using Clowd.Clipboard.Bitmaps.Core;
+using Clowd.Clipboard.Bitmaps;
 
-namespace Clowd.Bitmaps;
+namespace Clowd.Clipboard.Bitmaps;
 
 /// <summary>
 /// Flags for customizing behavior when reading data into a Bitmap implementation.

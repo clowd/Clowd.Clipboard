@@ -1,5 +1,4 @@
-﻿using Clowd.Bitmaps.Core;
-using Clowd.Clipboard.Formats;
+﻿using Clowd.Clipboard.Formats;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
+using Clowd.Clipboard.Bitmaps.Core;
 
 namespace Clowd.Clipboard
 {

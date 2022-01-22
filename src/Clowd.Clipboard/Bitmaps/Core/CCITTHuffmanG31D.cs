@@ -1,4 +1,4 @@
-﻿namespace Clowd.Bitmaps.Core;
+﻿namespace Clowd.Clipboard.Bitmaps.Core;
 
 internal struct G31DFaxCode
 {

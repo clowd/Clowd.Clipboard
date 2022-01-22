@@ -4,8 +4,9 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Clowd.Clipboard.Bitmaps.Core;
 
-namespace Clowd.Bitmaps.Core;
+namespace Clowd.Clipboard.Bitmaps.Core;
 
 internal struct BITMASKS
 {

@@ -1,11 +1,12 @@
-using Clowd.Bitmaps.Core;
 using System.ComponentModel;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Clowd.Clipboard.Bitmaps.Core;
+using Clowd.Clipboard.Bitmaps;
 
-namespace Clowd.Bitmaps;
+namespace Clowd.Clipboard.Bitmaps;
 
 // this class exists separately so it can be included as a submodule/file in ClipboardGapWpf and not create conflicts upstream - rather than including as a project.
 internal class BitmapWpfInternal

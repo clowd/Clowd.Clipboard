@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace Clowd.Bitmaps.Core;
+namespace Clowd.Clipboard.Bitmaps.Core;
 
 internal unsafe class PointerStream : Stream
 {

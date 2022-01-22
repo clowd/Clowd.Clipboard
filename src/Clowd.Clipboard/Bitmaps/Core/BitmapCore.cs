@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
+using Clowd.Clipboard.Bitmaps.Core;
 
-namespace Clowd.Bitmaps.Core;
+namespace Clowd.Clipboard.Bitmaps.Core;
 
 // http://zig.tgschultz.com/bmp_file_format.txt
 // http://paulbourke.net/dataformats/bitmaps/

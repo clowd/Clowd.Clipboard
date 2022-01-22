@@ -1,8 +1,9 @@
-﻿using Clowd.Bitmaps.Core;
-using System.IO;
+﻿using System.IO;
 using System.Windows.Media.Imaging;
+using Clowd.Clipboard.Bitmaps.Core;
+using Clowd.Clipboard.Bitmaps;
 
-namespace Clowd.Bitmaps;
+namespace Clowd.Clipboard.Bitmaps;
 
 /// <summary>
 /// Provides a WPF implementation of Bitmap reader and writer. This bitmap library can read almost any kind of bitmap and 

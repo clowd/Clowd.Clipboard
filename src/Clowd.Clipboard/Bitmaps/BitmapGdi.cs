@@ -1,9 +1,10 @@
-using Clowd.Bitmaps.Core;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
+using Clowd.Clipboard.Bitmaps.Core;
+using Clowd.Clipboard.Bitmaps;
 
-namespace Clowd.Bitmaps;
+namespace Clowd.Clipboard.Bitmaps;
 
 /// <summary>
 /// Provides a GDI+ implementation of Bitmap reader and writer. This bitmap library can read almost any kind of bitmap and 

@@ -1,4 +1,5 @@
-﻿namespace Clowd.Bitmaps.Core;
+﻿using Clowd.Clipboard.Bitmaps.Core;
+namespace Clowd.Clipboard.Bitmaps.Core;
 
 internal class BitFields
 {
@@ -68,7 +69,7 @@ internal unsafe class BitmapCorePixelFormat : IEquatable<BitmapCorePixelFormat>
 
     public static readonly BitmapCorePixelFormat Bgr5551 = new BitmapCorePixelFormat
     {
-        MscmsFormat = mscms.mscmsPxFormat.BM_x555RGB,
+        MscmsFormat =  mscms.mscmsPxFormat.BM_x555RGB,
         BitsPerPixel = 16,
         Masks = BitFields.BITFIELDS_BGRA_5551,
         Write = (ptr, b, g, r, a) =>
@@ -91,7 +92,7 @@ internal unsafe class BitmapCorePixelFormat : IEquatable<BitmapCorePixelFormat>
 
     public static readonly BitmapCorePixelFormat Bgr565 = new BitmapCorePixelFormat
     {
-        MscmsFormat = mscms.mscmsPxFormat.BM_565RGB,
+        MscmsFormat =  mscms.mscmsPxFormat.BM_565RGB,
         BitsPerPixel = 16,
         Masks = BitFields.BITFIELDS_BGR_565,
         Write = (ptr, b, g, r, a) =>
@@ -115,7 +116,7 @@ internal unsafe class BitmapCorePixelFormat : IEquatable<BitmapCorePixelFormat>
 
     public static readonly BitmapCorePixelFormat Rgb24 = new BitmapCorePixelFormat
     {
-        MscmsFormat = mscms.mscmsPxFormat.BM_BGRTRIPLETS,
+        MscmsFormat =  mscms.mscmsPxFormat.BM_BGRTRIPLETS,
         BitsPerPixel = 24,
         Masks = BitFields.BITFIELDS_RGB_24,
         Write = (ptr, b, g, r, a) =>
@@ -129,7 +130,7 @@ internal unsafe class BitmapCorePixelFormat : IEquatable<BitmapCorePixelFormat>
 
     public static readonly BitmapCorePixelFormat Bgr24 = new BitmapCorePixelFormat
     {
-        MscmsFormat = mscms.mscmsPxFormat.BM_RGBTRIPLETS,
+        MscmsFormat =  mscms.mscmsPxFormat.BM_RGBTRIPLETS,
         BitsPerPixel = 24,
         Masks = BitFields.BITFIELDS_BGR_24,
         Write = (ptr, b, g, r, a) =>
@@ -143,7 +144,7 @@ internal unsafe class BitmapCorePixelFormat : IEquatable<BitmapCorePixelFormat>
 
     public static readonly BitmapCorePixelFormat Bgra32 = new BitmapCorePixelFormat
     {
-        MscmsFormat = mscms.mscmsPxFormat.BM_xRGBQUADS,
+        MscmsFormat =  mscms.mscmsPxFormat.BM_xRGBQUADS,
         BitsPerPixel = 32,
         Masks = BitFields.BITFIELDS_BGRA_32,
         Write = (ptr, b, g, r, a) =>
