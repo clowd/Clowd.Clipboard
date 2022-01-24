@@ -1,10 +1,10 @@
 # Clowd.Clipboard
 This library is a light-weight clipboard replacement for WPF. Because we bundle in a completely custom bitmap parser, this library does not strictly depend on WPF or GDI, so could easily be ported to use other bitmap representations. The reasons for why a custom bitmap parser was written are below, and it can be used independently of the clipboard code, if all you need is a packed dib parser.
 
-## Clipboard Examples
+### Clipboard Examples
 Below are several examples of how to do clipboard operations.
 
-### Reading list of current clipboard formats
+#### Reading list of current clipboard formats
 
 ```cs
 using (var handle = new ClipboardHandle())
@@ -16,7 +16,7 @@ using (var handle = new ClipboardHandle())
 }
 ```
 
-### Getting or setting simple supported types
+#### Getting or setting simple supported types
 
 ```cs
 using (var handle = new ClipboardHandle())
@@ -27,7 +27,7 @@ using (var handle = new ClipboardHandle())
 }
 ```
 
-### Creating and using custom clipboard formats
+#### Creating and using custom clipboard formats
 
 ```cs
 // a custom format stored on the clipboard as UTF-8. 
