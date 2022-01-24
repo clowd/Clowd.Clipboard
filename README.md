@@ -1,3 +1,5 @@
+[![Nuget](https://img.shields.io/nuget/v/Clowd.Clipboard?style=flat-square)](https://www.nuget.org/packages/Clowd.Clipboard/)
+
 # Clowd.Clipboard
 This library is a light-weight clipboard replacement for WPF. Because we bundle in a completely custom bitmap parser, this library does not strictly depend on WPF or GDI, so could easily be ported to use other bitmap representations. The reasons for why a custom bitmap parser was written are below, and it can be used independently of the clipboard code, if all you need is a packed dib parser.
 
