@@ -7,44 +7,25 @@ using Clowd.Clipboard.Bitmaps.Core;
 
 namespace Clowd.Clipboard
 {
-    //public interface IClipboardHandle : IDisposable
-    //{
-    //    // MISC
-    //    IEnumerable<ClipboardFormat> GetPresentFormats();
-    //    void Empty();
-
-    //    // TEXT
-    //    string GetText();
-    //    void SetText(string text);
-
-    //    // IMAGE
-    //    BitmapSource GetImage();
-    //    void SetImage(BitmapSource bitmap);
-
-    //    // FILE DROP
-    //    string[] GetFileDropList();
-    //    void SetFileDropList(string[] files);
-
-    //    // CUSTOM
-    //    void SetFormat<T>(ClipboardFormat<T> format, T obj);
-    //    void SetFormat(ClipboardFormat format, byte[] bytes);
-    //    byte[] GetFormat(ClipboardFormat format);
-    //    T GetFormat<T>(ClipboardFormat<T> format);
-    //}
-
+    /// <summary>
+    /// Represents a handle to the clipboard. Open the handle via <see cref="Open"/>, read or 
+    /// set the clipboard, and then dispose this class as quickly as possible. Leaving this handle
+    /// open for too long will prevent other applications from accessing the clipboard, and may 
+    /// even cause them to freeze for a time.
+    /// </summary>
     public class ClipboardHandle : IDisposable
     {
-        public bool IsDisposed { get; private set; }
+        private const int RETRY_COUNT = 10;
+        private const int RETRY_DELAY = 100;
 
         static readonly WindowProcedureHandler _wndProc;
         static readonly IntPtr _hWindow;
         static readonly short _clsAtom;
         static readonly string _clsName;
+
+        bool _disposed;
         bool _cleared;
         bool _isOpen;
-
-        private const int RETRY_COUNT = 10;
-        private const int RETRY_DELAY = 100;
 
         static ClipboardHandle()
         {
@@ -74,6 +55,9 @@ namespace Clowd.Clipboard
                 throw new Win32Exception();
         }
 
+        /// <summary>
+        /// Reads the last Win32 error and throws a new <see cref="ClipboardBusyException"/>.
+        /// </summary>
         protected void ThrowOpenFailed()
         {
             var hr = Marshal.GetLastWin32Error();
@@ -105,6 +89,9 @@ namespace Clowd.Clipboard
             throw mex;
         }
 
+        /// <summary>
+        /// Opens the system clipboard for reading or writing.
+        /// </summary>
         public void Open()
         {
             int i = RETRY_COUNT;
@@ -118,6 +105,9 @@ namespace Clowd.Clipboard
             _isOpen = true;
         }
 
+        /// <summary>
+        /// Opens the system clipboard asynchronously for reading or writing. 
+        /// </summary>
         public async Task OpenAsync()
         {
             int i = RETRY_COUNT;
@@ -131,6 +121,11 @@ namespace Clowd.Clipboard
             _isOpen = true;
         }
 
+        /// <summary>
+        /// Clears everything on the clipboard. This is also done automatically before
+        /// setting any data to the clipboard, so it does not need to be called explicitly
+        /// unless you wish to completely empty the clipboard and leave it that way.
+        /// </summary>
         public virtual void Empty()
         {
             ThrowIfDisposed();
@@ -141,6 +136,9 @@ namespace Clowd.Clipboard
             _cleared = true;
         }
 
+        /// <summary>
+        /// Returns a list of all the formats currently stored in the current clipboard object.
+        /// </summary>
         public virtual IEnumerable<ClipboardFormat> GetPresentFormats()
         {
             ThrowIfDisposed();
@@ -159,6 +157,9 @@ namespace Clowd.Clipboard
                 Marshal.ThrowExceptionForHR(err);
         }
 
+        /// <summary>
+        /// Retrieves any text stored on the clipboard.
+        /// </summary>
         public virtual string GetText()
         {
             // windows doesn't screw up text like it does with images, so we're OK with windows
@@ -171,11 +172,17 @@ namespace Clowd.Clipboard
             return null;
         }
 
+        /// <summary>
+        /// Sets the text on the clipboard to the specified string.
+        /// </summary>
         public virtual void SetText(string text)
         {
             SetFormat(ClipboardFormat.UnicodeText, text);
         }
 
+        /// <summary>
+        /// Sets the image on the clipboard to the specified bitmap.
+        /// </summary>
         public virtual void SetImage(BitmapSource bitmap)
         {
             // Write PNG format as some applications do not support alpha in DIB's and
@@ -184,6 +191,9 @@ namespace Clowd.Clipboard
             SetFormat(ClipboardFormat.DibV5, bitmap);
         }
 
+        /// <summary>
+        /// Retrieves any detectable bitmap stored on the clipboard.
+        /// </summary>
         public virtual BitmapSource GetImage()
         {
             var fmtPng = ClipboardFormat.Png;
@@ -211,6 +221,9 @@ namespace Clowd.Clipboard
             return null;
         }
 
+        /// <summary>
+        /// Retrieves the current file drop list on the clipboard, or returns null if there is none.
+        /// </summary>
         public virtual string[] GetFileDropList()
         {
             var fmtDrop = ClipboardFormat.FileDrop;
@@ -236,31 +249,54 @@ namespace Clowd.Clipboard
             return null;
         }
 
+        /// <summary>
+        /// Set the file drop list on the clipboard to the specified list of strings.
+        /// </summary>
         public virtual void SetFileDropList(string[] files)
         {
             SetFormat(ClipboardFormat.FileDrop, files);
         }
 
+        /// <summary>
+        /// Tries to get a typed clipboard format object from the current clipboard. Returns false
+        /// if the format does not exist, or fails for another reason.
+        /// </summary>
         public virtual bool TryGetFormatType<T>(ClipboardFormat<T> format, out T value)
         {
             return TryGetFormatObject(format.Id, format.TypeObjectReader, out value);
         }
 
+        /// <summary>
+        /// Retrieves a typed clipboard format object from the current clipboard. Throws exception if
+        /// the format is not currently on the clipboard.
+        /// </summary>
         public virtual T GetFormatType<T>(ClipboardFormat<T> format)
         {
             return GetFormatObject(format.Id, format.TypeObjectReader);
         }
 
+        /// <summary>
+        /// Tries to get a typed clipboard format as bytes from the current clipboard. Returns false
+        /// if the format does not exist, or fails for another reason.
+        /// </summary>
         public virtual bool TryGetFormatBytes(ClipboardFormat format, out byte[] bytes)
         {
             return TryGetFormatObject(format.Id, new BytesDataConverter(), out bytes);
         }
 
+        /// <summary>
+        /// Retrieves a typed clipboard format as bytes from the current clipboard. Throws exception if
+        /// the format is not currently on the clipboard.
+        /// </summary>
         public virtual byte[] GetFormatBytes(ClipboardFormat format)
         {
             return GetFormatObject(format.Id, new BytesDataConverter());
         }
 
+        /// <summary>
+        /// Tries to get a typed clipboard format as a stream from the current clipboard. Returns false
+        /// if the format does not exist, or fails for another reason.
+        /// </summary>
         public virtual bool TryGetFormatStream(ClipboardFormat format, out Stream stream)
         {
             if (TryGetFormatObject(format.Id, new BytesDataConverter(), out var bytes))
@@ -276,27 +312,47 @@ namespace Clowd.Clipboard
             return false;
         }
 
+        /// <summary>
+        /// Retrieves a typed clipboard format as a stream from the current clipboard. Throws exception if
+        /// the format is not currently on the clipboard.
+        /// </summary>
         public virtual Stream GetFormatStream(ClipboardFormat format)
         {
             return new MemoryStream(GetFormatBytes(format));
         }
 
+        /// <summary>
+        /// Set clipboard format to the current clipboard. This will clear the clipboard
+        /// if this is the first call to "Set" since the clipboard handle was opened.
+        /// </summary>
         public virtual void SetFormat<T>(ClipboardFormat<T> format, T obj)
         {
             SetFormatObject(format.Id, obj, format.TypeObjectReader);
         }
 
+        /// <summary>
+        /// Set a clipboard format to the current clipboard. This will clear the clipboard
+        /// if this is the first call to "Set" since the clipboard handle was opened.
+        /// </summary>
         public virtual void SetFormat(ClipboardFormat format, byte[] bytes)
         {
             SetFormatObject(format.Id, bytes, new BytesDataConverter());
         }
 
+        /// <summary>
+        /// Set clipboard format to the current clipboard. This will clear the clipboard
+        /// if this is the first call to "Set" since the clipboard handle was opened.
+        /// </summary>
         public virtual void SetFormat(ClipboardFormat format, Stream stream)
         {
             var bytes = StructUtil.ReadBytes(stream);
             SetFormatObject(format.Id, bytes, new BytesDataConverter());
         }
 
+        /// <summary>
+        /// Tries to retrieve data from the clipboard (see <see cref="GetFormatObject{T}(uint, IDataConverter{T})"/>)
+        /// but will not throw an exception if this was not possible.
+        /// </summary>
         protected virtual bool TryGetFormatObject<T>(uint format, IDataConverter<T> converter, out T value)
         {
             try
@@ -311,6 +367,9 @@ namespace Clowd.Clipboard
             }
         }
 
+        /// <summary>
+        /// Retrieves data at the specified clipboard format Id, and converts it into a managed object.
+        /// </summary>
         protected virtual T GetFormatObject<T>(uint format, IDataConverter<T> converter)
         {
             ThrowIfDisposed();
@@ -333,6 +392,14 @@ namespace Clowd.Clipboard
             return converter.ReadFromHGlobal(hglobal);
         }
 
+        /// <summary>
+        /// Writes an object to a specific clipboard format. 
+        /// </summary>
+        /// <typeparam name="T">Type of object to store on the clipboard.</typeparam>
+        /// <param name="cfFormat">The Id of the format to write.</param>
+        /// <param name="obj">The object to write to the clipboard.</param>
+        /// <param name="converter">The coverter responsible for writing the object to an HGlobal.</param>
+        /// <exception cref="Exception">If the object was not written successfully.</exception>
         protected virtual void SetFormatObject<T>(uint cfFormat, T obj, IDataConverter<T> converter)
         {
             ThrowIfDisposed();
@@ -358,19 +425,25 @@ namespace Clowd.Clipboard
             }
         }
 
+        /// <summary>
+        /// Closes the currently open clipboard handle. 
+        /// </summary>
         public virtual void Dispose()
         {
-            if (IsDisposed) return;
-            IsDisposed = true;
+            if (_disposed) return;
+            _disposed = true;
             NativeMethods.CloseClipboard();
         }
 
-        protected virtual void ThrowIfDisposed()
+        /// <summary>
+        /// Throws exception if this class is disposed.
+        /// </summary>
+        protected void ThrowIfDisposed()
         {
             if (!_isOpen)
                 throw new InvalidOperationException("The clipboard is not yet open, please call Open() or OpenAsync() first.");
 
-            if (IsDisposed)
+            if (_disposed)
                 throw new ObjectDisposedException(nameof(ClipboardHandle));
         }
     }

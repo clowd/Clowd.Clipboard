@@ -2,6 +2,9 @@
 
 namespace Clowd.Clipboard.Formats
 {
+    /// <summary>
+    /// Reads an image stored in a file drop list as a WPF BitmapSource.
+    /// </summary>
     public class ImageWpfFileDrop : HandleDataConverterBase<BitmapSource>
     {
         private static string[] _knownImageExt = new[]
@@ -10,11 +13,13 @@ namespace Clowd.Clipboard.Formats
             ".gif", ".tif", ".tiff", ".ico"
         };
 
+        /// <inheritdoc />
         public override int GetDataSize(BitmapSource obj)
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public override BitmapSource ReadFromHandle(IntPtr ptr, int memSize)
         {
             var reader = new FileDrop();
@@ -36,9 +41,12 @@ namespace Clowd.Clipboard.Formats
             return null;
         }
 
+        /// <inheritdoc />
         public override void WriteToHandle(BitmapSource obj, IntPtr ptr)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException(
+                "Cannot write a bitmap directly to the clipboard as a file drop list. " +
+                "Use a different format or save it to a file first.");
         }
     }
 }

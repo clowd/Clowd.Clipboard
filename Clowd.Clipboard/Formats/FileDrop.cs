@@ -3,12 +3,16 @@ using System.Text;
 
 namespace Clowd.Clipboard.Formats
 {
+    /// <summary>
+    /// Converter for native windows file drop lists containing a list of file paths.
+    /// </summary>
     public class FileDrop : HandleDataConverterBase<string[]>
     {
         const int PATH_MAX_LEN = 260;
         const int PATH_LONG_MAX_LEN = short.MaxValue;
         const int baseStructSize = 4 + 8 + 4 + 4;
 
+        /// <inheritdoc/>
         public override string[] ReadFromHandle(IntPtr hdrop, int memSize)
         {
             string[] files = null;
@@ -32,7 +36,7 @@ namespace Clowd.Clipboard.Formats
             return files;
         }
 
-        public static int DragQueryFileLongPath(IntPtr hDrop, int iFile, StringBuilder lpszFile)
+        private static int DragQueryFileLongPath(IntPtr hDrop, int iFile, StringBuilder lpszFile)
         {
             if (null != lpszFile && 0 != lpszFile.Capacity && iFile != unchecked((int)0xFFFFFFFF))
             {
@@ -65,6 +69,7 @@ namespace Clowd.Clipboard.Formats
             }
         }
 
+        /// <inheritdoc/>
         public override int GetDataSize(string[] files)
         {
             bool unicode = (Marshal.SystemDefaultCharSize != 1);
@@ -132,6 +137,7 @@ namespace Clowd.Clipboard.Formats
             }
         }
 
+        /// <inheritdoc/>
         public override void WriteToHandle(string[] files, IntPtr currentPtr)
         {
             //if (files == null)

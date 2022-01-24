@@ -7,8 +7,12 @@ using ImageLockMode = System.Drawing.Imaging.ImageLockMode;
 
 namespace Clowd.Clipboard.Formats
 {
+    /// <summary>
+    /// Data converter for translating CF_BITMAP (gdi image handle) into a WPF BitmapSource.
+    /// </summary>
     public class ImageBitmap : IDataConverter<BitmapSource>
     {
+        /// <inheritdoc/>
         public BitmapSource ReadFromHGlobal(IntPtr hGlobal)
         {
             using var bitmap = Bitmap.FromHbitmap(hGlobal);
@@ -34,6 +38,7 @@ namespace Clowd.Clipboard.Formats
             return bitmapSource;
         }
 
+        /// <inheritdoc/>
         public IntPtr WriteToHGlobal(BitmapSource obj)
         {
             throw new NotSupportedException("Should always write a DIB to the clipboard instead of a DDB.");
