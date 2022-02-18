@@ -18,9 +18,7 @@ namespace Clowd.Clipboard
         }
 
         /// <summary>
-        /// Clears everything on the clipboard. This is also done automatically before
-        /// setting any data to the clipboard, so it does not need to be called explicitly
-        /// unless you wish to completely empty the clipboard and leave it that way.
+        /// <inheritdoc cref="ClipboardHandle.Empty"/>
         /// </summary>
         public static void Empty()
         {
@@ -29,7 +27,7 @@ namespace Clowd.Clipboard
         }
 
         /// <summary>
-        /// Retrieves any text stored on the clipboard.
+        /// <inheritdoc cref="ClipboardHandle.GetText"/>
         /// </summary>
         public static string GetText()
         {
@@ -38,7 +36,7 @@ namespace Clowd.Clipboard
         }
 
         /// <summary>
-        /// Sets the text on the clipboard to the specified string.
+        /// <inheritdoc cref="ClipboardHandle.SetText"/>
         /// </summary>
         public static void SetText(string text)
         {
@@ -47,7 +45,7 @@ namespace Clowd.Clipboard
         }
 
         /// <summary>
-        /// Sets the image on the clipboard to the specified bitmap.
+        /// <inheritdoc cref="ClipboardHandle.SetImage"/>
         /// </summary>
         public static void SetImage(BitmapSource bitmap)
         {
@@ -56,7 +54,7 @@ namespace Clowd.Clipboard
         }
 
         /// <summary>
-        /// Retrieves any detectable bitmap stored on the clipboard.
+        /// <inheritdoc cref="ClipboardHandle.GetImage"/>
         /// </summary>
         public static BitmapSource GetImage()
         {
@@ -65,7 +63,7 @@ namespace Clowd.Clipboard
         }
 
         /// <summary>
-        /// Retrieves the current file drop list on the clipboard, or returns null if there is none.
+        /// <inheritdoc cref="ClipboardHandle.GetFileDropList"/>
         /// </summary>
         public static string[] GetFileDropList()
         {
@@ -74,7 +72,7 @@ namespace Clowd.Clipboard
         }
 
         /// <summary>
-        /// Set the file drop list on the clipboard to the specified list of strings.
+        /// <inheritdoc cref="ClipboardHandle.SetFileDropList"/>
         /// </summary>
         public static void SetFileDropList(string[] files)
         {
