@@ -12,6 +12,9 @@ namespace Clowd.Clipboard
     /// </summary>
     public class ClipboardFormat : IEquatable<ClipboardFormat>
     {
+        // this is a good reference for formats
+        // https://www.codeproject.com/Reference/1091137/Windows-Clipboard-Formats
+
         /// <summary>
         /// The list of clipboard formats currently known to this process.
         /// </summary>
@@ -102,6 +105,10 @@ namespace Clowd.Clipboard
         [Obsolete] public static readonly ClipboardFormat<string> FileName = DefaultFormat("FileName", new TextAnsi());
         /// <summary> Legacy format for storing a single file path on the clipboard as a widechar string. </summary>
         [Obsolete] public static readonly ClipboardFormat<string> FileNameW = DefaultFormat("FileNameW", new TextUnicode());
+        /// <summary> Legacy format for storing a single file path on the clipboard as an asni string. </summary>
+        public static readonly ClipboardFormat<string> UniformResourceLocator = DefaultFormat("UniformResourceLocator", new TextAnsi());
+        /// <summary> Legacy format for storing a single file path on the clipboard as a widechar string. </summary>
+        public static readonly ClipboardFormat<string> UniformResourceLocatorW = DefaultFormat("UniformResourceLocatorW", new TextUnicode());
 
         /// <summary>
         /// The Id of this clipboard format. Could be a built-in format like CF_TEXT or CF_BITMAP, 

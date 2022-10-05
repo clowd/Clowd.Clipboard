@@ -213,6 +213,24 @@ namespace Clowd.Clipboard
         }
 
         /// <summary>
+        /// Tries to get a typed clipboard format object from the current clipboard. Returns false
+        /// if the format does not exist, or fails for another reason.
+        /// </summary>
+        public virtual bool TryGetFormatType<T>(ClipboardFormat format, IDataConverter<T> converter, out T value)
+        {
+            return TryGetFormatObject(format.Id, converter, out value);
+        }
+
+        /// <summary>
+        /// Retrieves a typed clipboard format object from the current clipboard. Throws exception if
+        /// the format is not currently on the clipboard.
+        /// </summary>
+        public virtual T GetFormatType<T>(ClipboardFormat format, IDataConverter<T> converter)
+        {
+            return GetFormatObject(format.Id, converter);
+        }
+
+        /// <summary>
         /// Tries to get a typed clipboard format as bytes from the current clipboard. Returns false
         /// if the format does not exist, or fails for another reason.
         /// </summary>
@@ -284,6 +302,15 @@ namespace Clowd.Clipboard
         {
             var bytes = StructUtil.ReadBytes(stream);
             SetFormatObject(format.Id, bytes, new BytesDataConverter());
+        }
+
+        /// <summary>
+        /// Set clipboard format to the current clipboard. This will clear the clipboard
+        /// if this is the first call to "Set" since the clipboard handle was opened.
+        /// </summary>
+        public virtual void SetFormat<T>(ClipboardFormat format, T obj, IDataConverter<T> converter)
+        {
+            SetFormatObject(format.Id, obj, converter);
         }
 
         /// <summary>
