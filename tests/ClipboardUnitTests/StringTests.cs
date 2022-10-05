@@ -58,7 +58,7 @@ namespace ClipboardGapWpf.Tests
         public void U16toU16_Inline()
         {
             string round;
-            using (var handle = new ClipboardHandle())
+            using (var handle = new ClipboardHandleWpf())
             {
                 handle.Open();
                 handle.SetFormat(ClipboardFormat.UnicodeText, _text);
@@ -72,12 +72,12 @@ namespace ClipboardGapWpf.Tests
         public void U16toU16_Break()
         {
             string round;
-            using (var handle = new ClipboardHandle())
+            using (var handle = new ClipboardHandleWpf())
             {
                 handle.Open();
                 handle.SetFormat(ClipboardFormat.UnicodeText, _text);
             }
-            using (var handle = new ClipboardHandle())
+            using (var handle = new ClipboardHandleWpf())
             {
                 handle.Open();
                 round = handle.GetFormatType(ClipboardFormat.UnicodeText);
@@ -91,12 +91,12 @@ namespace ClipboardGapWpf.Tests
         {
             var reference = "Hello, I am a test! :)";
             string round;
-            using (var handle = new ClipboardHandle())
+            using (var handle = new ClipboardHandleWpf())
             {
                 handle.Open();
                 handle.SetFormat(ClipboardFormat.Text, reference);
             }
-            using (var handle = new ClipboardHandle())
+            using (var handle = new ClipboardHandleWpf())
             {
                 handle.Open();
                 round = handle.GetFormatType(ClipboardFormat.UnicodeText);
@@ -110,12 +110,12 @@ namespace ClipboardGapWpf.Tests
         {
             var reference = "Hello, I am a test! :)";
             string round;
-            using (var handle = new ClipboardHandle())
+            using (var handle = new ClipboardHandleWpf())
             {
                 handle.Open();
                 handle.SetFormat(ClipboardFormat.UnicodeText, reference);
             }
-            using (var handle = new ClipboardHandle())
+            using (var handle = new ClipboardHandleWpf())
             {
                 handle.Open();
                 round = handle.GetFormatType(ClipboardFormat.Text);

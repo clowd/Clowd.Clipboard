@@ -1,8 +1,9 @@
-﻿using System.Runtime.InteropServices;
+﻿#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+using System.Runtime.InteropServices;
 
-namespace Clowd.Clipboard.Bitmaps.Core;
+namespace Clowd.Clipboard.Bitmaps;
 
-internal unsafe class PointerStream : Stream
+public unsafe class PointerStream : Stream
 {
     private readonly byte* _bufferStart;
     private readonly long _bufferLen;

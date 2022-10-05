@@ -1,10 +1,12 @@
-﻿using System.ComponentModel;
+﻿#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Clowd.Clipboard.Bitmaps.Core;
+namespace Clowd.Clipboard.Bitmaps;
 
-internal class mscms
+public class mscms
 {
     // https://docs.microsoft.com/en-us/windows/win32/api/icm/
     private const string libmscms = "mscms";
@@ -12,9 +14,9 @@ internal class mscms
     //private const uint LCS_SIGNATURE = 0x50534f43;
     //private const UInt32 PROOF_MODE = 0x00000001;
     //private const UInt32 NORMAL_MODE = 0x00000002;
-    private const UInt32 BEST_MODE = 0x00000003;
+    private const uint BEST_MODE = 0x00000003;
     //private const UInt32 ENABLE_GAMUT_CHECKING = 0x00010000;
-    private const UInt32 USE_RELATIVE_COLORIMETRIC = 0x00020000;
+    private const uint USE_RELATIVE_COLORIMETRIC = 0x00020000;
     //private const UInt32 FAST_TRANSLATE = 0x00040000;
 
     [DllImport(libmscms)]
@@ -76,8 +78,8 @@ internal class mscms
             var inputPtr = (byte*)paInputColors;
             foreach (var c in color)
             {
-                var nclr = (long)(c.rgbRed / cmax * nmax) | ((long)(c.rgbGreen / cmax * nmax) << 16) | ((long)(c.rgbBlue / cmax * nmax) << 32);
-                *((long*)inputPtr) = nclr;
+                var nclr = (long)(c.rgbRed / cmax * nmax) | (long)(c.rgbGreen / cmax * nmax) << 16 | (long)(c.rgbBlue / cmax * nmax) << 32;
+                *(long*)inputPtr = nclr;
                 inputPtr += colorSize;
             }
 
@@ -92,12 +94,12 @@ internal class mscms
                 var output = new RGBQUAD[color.Length];
                 for (int i = 0; i < color.Length; i++)
                 {
-                    long nclr = *((long*)outputPtr);
+                    long nclr = *(long*)outputPtr;
                     output[i] = new RGBQUAD
                     {
                         rgbRed = (byte)((nclr & nmask) / nmax * cmax),
-                        rgbGreen = (byte)(((nclr >> 16) & nmask) / nmax * cmax),
-                        rgbBlue = (byte)(((nclr >> 32) & nmask) / nmax * cmax),
+                        rgbGreen = (byte)((nclr >> 16 & nmask) / nmax * cmax),
+                        rgbBlue = (byte)((nclr >> 32 & nmask) / nmax * cmax),
                     };
                     outputPtr += colorSize;
                 }

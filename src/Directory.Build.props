@@ -1,10 +1,6 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-  
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
   <PropertyGroup>
-    <TargetFrameworks>net461;net5.0-windows;net6.0-windows</TargetFrameworks>
-    <UseWPF>true</UseWPF>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>10</LangVersion>
     <Authors>caesay</Authors>
@@ -13,7 +9,7 @@
     <Description>A lightweight windows clipboard and bitmap parsing library.</Description>
     <PackageTags>windows;clipboard;bitmaps;dib;parser;interop</PackageTags>
     <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\Clowd.Clipboard.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\..\Clowd.Clipboard.snk</AssemblyOriginatorKeyFile>
     <DebugType>embedded</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
@@ -22,9 +18,4 @@
   <ItemGroup>
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.4.*" PrivateAssets="All" />
   </ItemGroup>
-  
-  <ItemGroup Condition=" $(TargetFramework) != 'net461' ">
-    <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
-  </ItemGroup>
-  
 </Project>

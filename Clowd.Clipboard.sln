@@ -12,13 +12,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{C8A1E9B5-1453-4059-85A8-6BFBD12414F1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Clowd.Clipboard", "Clowd.Clipboard\Clowd.Clipboard.csproj", "{8BFEF7F4-D577-467A-B0DD-F2DA28760013}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Clowd.Clipboard", "src\Clowd.Clipboard\Clowd.Clipboard.csproj", "{8BFEF7F4-D577-467A-B0DD-F2DA28760013}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClipboardConsoleTests", "tests\ClipboardConsoleTests\ClipboardConsoleTests.csproj", "{65FAC6E7-1DB3-4BAD-BF99-FDA7FA551C09}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClipboardUnitTests", "tests\ClipboardUnitTests\ClipboardUnitTests.csproj", "{CEE3026C-62F7-4A9B-B2CC-5B2D620431F2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClipboardWpfTests", "tests\ClipboardWpfTests\ClipboardWpfTests.csproj", "{B5BF5633-C2EE-410D-9883-87FFFEBDD302}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clowd.Clipboard.Wpf", "src\Clowd.Clipboard.Wpf\Clowd.Clipboard.Wpf.csproj", "{19225BE1-B7FE-4A95-B3B5-FF819500CA08}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clowd.Clipboard.Gdi", "src\Clowd.Clipboard.Gdi\Clowd.Clipboard.Gdi.csproj", "{68848B44-07F5-4E91-ADE3-1B83B566F616}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -46,6 +50,14 @@ Global
 		{B5BF5633-C2EE-410D-9883-87FFFEBDD302}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B5BF5633-C2EE-410D-9883-87FFFEBDD302}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B5BF5633-C2EE-410D-9883-87FFFEBDD302}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19225BE1-B7FE-4A95-B3B5-FF819500CA08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19225BE1-B7FE-4A95-B3B5-FF819500CA08}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19225BE1-B7FE-4A95-B3B5-FF819500CA08}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19225BE1-B7FE-4A95-B3B5-FF819500CA08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{68848B44-07F5-4E91-ADE3-1B83B566F616}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68848B44-07F5-4E91-ADE3-1B83B566F616}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68848B44-07F5-4E91-ADE3-1B83B566F616}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68848B44-07F5-4E91-ADE3-1B83B566F616}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,6 +1,8 @@
-﻿namespace Clowd.Clipboard.Bitmaps.Core;
+﻿#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
-internal struct G31DFaxCode
+namespace Clowd.Clipboard.Bitmaps;
+
+public struct G31DFaxCode
 {
     public byte bitLength;
     public ushort code;
@@ -14,7 +16,7 @@ internal struct G31DFaxCode
     }
 }
 
-internal class CCITTHuffmanG31D
+public class CCITTHuffmanG31D
 {
     // 1 = black and 0 = white
     // Run lengths are represented by two types of code words: makeup and terminating

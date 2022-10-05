@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Text;
 using System.Windows;
-using System.Windows.Media.Imaging;
 
 namespace Clowd.Clipboard
 {
@@ -42,8 +41,8 @@ namespace Clowd.Clipboard
 
         /// <summary> CF_TEXT built-in, possibly synthesized format. Represents text encoded as Ansi. </summary>
         public static readonly ClipboardFormat<string> Text = DefaultFormat(CF_TEXT, "Text", new TextAnsi());
-        /// <summary> CF_TEXT built-in, possibly synthesized format. Represents image data stored as a GDI handle to a Device Dependent Bitmap. </summary>
-        public static readonly ClipboardFormat<BitmapSource> Bitmap = DefaultFormat(CF_BITMAP, "Bitmap", new ImageBitmap());
+        /// <summary> CF_BITMAP built-in, possibly synthesized format. Represents image data stored as a GDI handle to a Device Dependent Bitmap. </summary>
+        public static readonly ClipboardFormat Bitmap = DefaultFormat(CF_BITMAP, "Bitmap");
         /// <summary> CF_METAFILEPICT built-in format. Handle to a metafile picture format as defined by the METAFILEPICT structure. </summary>
         public static readonly ClipboardFormat MetafilePict = DefaultFormat(CF_METAFILEPICT, "MetaFilePict");
         /// <summary> CF_SYLK built-in format. Microsoft Symbolic Link (SYLK) format. </summary>
@@ -51,11 +50,11 @@ namespace Clowd.Clipboard
         /// <summary> CF_DIF built-in format. Software Arts' Data Interchange Format. </summary>
         public static readonly ClipboardFormat DataInterchangeFormat = DefaultFormat(CF_DIF, "DataInterchangeFormat");
         /// <summary> CF_TIFF built-in format. Tagged-image file format. </summary>
-        public static readonly ClipboardFormat<BitmapSource> Tiff = DefaultFormat(CF_TIFF, "TaggedImageFileFormat", new ImageWpfBasicEncoderTiff());
+        public static readonly ClipboardFormat Tiff = DefaultFormat(CF_TIFF, "TaggedImageFileFormat");
         /// <summary> CF_OEMTEXT built-in format. Text format containing characters in the OEM character set. </summary>
         public static readonly ClipboardFormat<string> OemText = DefaultFormat(CF_OEMTEXT, "OEMText", new TextAnsi());
         /// <summary> CF_DIB built-in, possibly synthesized format. A memory object containing a BITMAPINFO structure followed by the bitmap bits. </summary>
-        public static readonly ClipboardFormat<BitmapSource> Dib = DefaultFormat(CF_DIB, "DeviceIndependentBitmap", new ImageWpfDib());
+        public static readonly ClipboardFormat Dib = DefaultFormat(CF_DIB, "DeviceIndependentBitmap");
         /// <summary> CF_PALETTE built-in format. Handle to a color palette. Whenever an application places data in the clipboard that depends
         /// on or assumes a color palette, it should place the palette on the clipboard as well. </summary>
         public static readonly ClipboardFormat Palette = DefaultFormat(CF_PALETTE, "Palette");
@@ -75,7 +74,7 @@ namespace Clowd.Clipboard
         public static readonly ClipboardFormat<CultureInfo> Locale = DefaultFormat(CF_LOCALE, "Locale", new Locale());
         /// <summary> CF_DIBV5 built-in, possibly synthesized format. 
         /// A memory object containing a BITMAPV5HEADER structure followed by the bitmap color space information and the bitmap bits. </summary>
-        public static readonly ClipboardFormat<BitmapSource> DibV5 = DefaultFormat(CF_DIBV5, "Format17", new ImageWpfDibV5());
+        public static readonly ClipboardFormat DibV5 = DefaultFormat(CF_DIBV5, "Format17");
 
         // === CUSTOM FORMATS ===
 
@@ -88,17 +87,17 @@ namespace Clowd.Clipboard
         /// <summary> XAML encoded in UTF-8. </summary>
         public static readonly ClipboardFormat<string> Xaml = DefaultFormat("Xaml", new TextUtf8());
         /// <summary> JPEG image format. </summary>
-        public static readonly ClipboardFormat<BitmapSource> Jpg = DefaultFormat("JPG", new ImageWpfBasicEncoderJpeg());
+        public static readonly ClipboardFormat Jpg = DefaultFormat("JPG");
         /// <summary> JPEG image format. </summary>
-        public static readonly ClipboardFormat<BitmapSource> Jpeg = DefaultFormat("JPEG", new ImageWpfBasicEncoderJpeg());
+        public static readonly ClipboardFormat Jpeg = DefaultFormat("JPEG");
         /// <summary> JPEG image format. </summary>
-        public static readonly ClipboardFormat<BitmapSource> Jfif = DefaultFormat("Jfif", new ImageWpfBasicEncoderJpeg());
+        public static readonly ClipboardFormat Jfif = DefaultFormat("Jfif");
         /// <summary> GIF image format. </summary>
-        public static readonly ClipboardFormat<BitmapSource> Gif = DefaultFormat("Gif", new ImageWpfBasicEncoderGif());
+        public static readonly ClipboardFormat Gif = DefaultFormat("Gif");
         /// <summary> PNG image format. </summary>
-        public static readonly ClipboardFormat<BitmapSource> Png = DefaultFormat("PNG", new ImageWpfBasicEncoderPng());
+        public static readonly ClipboardFormat Png = DefaultFormat("PNG");
         /// <summary> Specifies the user action that created the current clipboard state (eg. copied or cut files to clipboard). </summary>
-        public static readonly ClipboardFormat<DragDropEffects> DropEffect = DefaultFormat("Preferred DropEffect", new DropEffect());
+        public static readonly ClipboardFormat<int> DropEffect = DefaultFormat("Preferred DropEffect", new Int32DataConverter());
         /// <summary> Legacy format for storing a single file path on the clipboard as an asni string. </summary>
         [Obsolete] public static readonly ClipboardFormat<string> FileName = DefaultFormat("FileName", new TextAnsi());
         /// <summary> Legacy format for storing a single file path on the clipboard as a widechar string. </summary>
@@ -116,6 +115,13 @@ namespace Clowd.Clipboard
         public string Name { get; }
 
         /// <summary>
+        /// Do not use.
+        /// </summary>
+        protected ClipboardFormat()
+        {
+        }
+
+        /// <summary>
         /// Create a new clipboard format class. This does not register the format with windows, 
         /// use <see cref="CreateCustomFormat(string)"/> instead.
         /// </summary>
@@ -125,21 +131,46 @@ namespace Clowd.Clipboard
             Name = name;
         }
 
-        private static ClipboardFormat<T> DefaultFormat<T>(uint formatId, string formatName, IDataConverter<T> formats)
+        /// <summary>
+        /// Used internally by this library to register built-in types. Use <see cref="CreateCustomFormat(string)"/> for registering
+        /// clipboard formats specific to your application.
+        /// </summary>
+        protected static ClipboardFormat<T> DefaultFormat<T>(uint formatId, string formatName, IDataConverter<T> formats)
         {
             var fmt = new ClipboardFormat<T>(formatId, formatName, formats);
             _lookup.Add(formatId, fmt);
             return fmt;
         }
 
-        private static ClipboardFormat DefaultFormat(uint formatId, string formatName)
+        /// <summary>
+        /// Used internally by this library to register built-in types. Use <see cref="CreateCustomFormat(string)"/> for registering
+        /// clipboard formats specific to your application.
+        /// </summary>
+        protected static ClipboardFormat DefaultFormat(uint formatId, string formatName)
         {
             var fmt = new ClipboardFormat(formatId, formatName);
             _lookup.Add(formatId, fmt);
             return fmt;
         }
 
-        private static ClipboardFormat<T> DefaultFormat<T>(string formatName, IDataConverter<T> formats)
+        /// <summary>
+        /// Used internally by this library to register built-in types. Use <see cref="CreateCustomFormat(string)"/> for registering
+        /// clipboard formats specific to your application.
+        /// </summary>
+        protected static ClipboardFormat DefaultFormat(string formatName)
+        {
+            var formatId = NativeMethods.RegisterClipboardFormat(formatName);
+            if (formatId == 0)
+                throw new Win32Exception();
+
+            return DefaultFormat(formatId, formatName);
+        }
+
+        /// <summary>
+        /// Used internally by this library to register built-in types. Use <see cref="CreateCustomFormat(string)"/> for registering
+        /// clipboard formats specific to your application.
+        /// </summary>
+        protected static ClipboardFormat<T> DefaultFormat<T>(string formatName, IDataConverter<T> formats)
         {
             var formatId = NativeMethods.RegisterClipboardFormat(formatName);
             if (formatId == 0)

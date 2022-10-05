@@ -1,9 +1,8 @@
-﻿using Clowd.Clipboard.Formats;
+﻿using Clowd.Clipboard.Bitmaps;
+using Clowd.Clipboard.Formats;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Windows.Media.Imaging;
-using Clowd.Clipboard.Bitmaps.Core;
 
 namespace Clowd.Clipboard
 {
@@ -13,47 +12,16 @@ namespace Clowd.Clipboard
     /// open for too long will prevent other applications from accessing the clipboard, and may 
     /// even cause them to freeze for a time.
     /// </summary>
-    public class ClipboardHandle : IDisposable
+    public abstract class ClipboardHandleBase<TBitmap> : IDisposable
     {
         private const int RETRY_COUNT = 10;
         private const int RETRY_DELAY = 100;
 
-        static readonly WindowProcedureHandler _wndProc;
-        static readonly IntPtr _hWindow;
-        static readonly short _clsAtom;
-        static readonly string _clsName;
+        private IntPtr _hWindow = ClipboardWindow.Handle;
 
         bool _disposed;
         bool _cleared;
         bool _isOpen;
-
-        static ClipboardHandle()
-        {
-            _wndProc = NativeMethods.DefWindowProc;
-            _clsName = "ClipboardGap_" + DateTime.Now.Ticks;
-
-            WindowClass wc;
-            wc.style = 0;
-            wc.lpfnWndProc = _wndProc;
-            wc.cbClsExtra = 0;
-            wc.cbWndExtra = 0;
-            wc.hInstance = IntPtr.Zero;
-            wc.hIcon = IntPtr.Zero;
-            wc.hCursor = IntPtr.Zero;
-            wc.hbrBackground = IntPtr.Zero;
-            wc.lpszMenuName = "";
-            wc.lpszClassName = _clsName;
-
-            // we just create one window for this process, it will be used for all future clipboard handles.
-            // this class will be unregistered when the process exits.
-            _clsAtom = NativeMethods.RegisterClass(ref wc);
-            if (_clsAtom == 0)
-                throw new Win32Exception();
-
-            _hWindow = NativeMethods.CreateWindowEx(0, _clsName, "", 0, 0, 0, 1, 1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
-            if (_hWindow == IntPtr.Zero)
-                throw new Win32Exception();
-        }
 
         /// <summary>
         /// Reads the last Win32 error and throws a new <see cref="ClipboardBusyException"/>.
@@ -116,7 +84,7 @@ namespace Clowd.Clipboard
                 var success = NativeMethods.OpenClipboard(_hWindow);
                 if (success) break;
                 if (--i == 0) ThrowOpenFailed();
-                await Task.Delay(RETRY_DELAY);
+                await Task.Delay(RETRY_DELAY).ConfigureAwait(false);
             }
             _isOpen = true;
         }
@@ -183,43 +151,12 @@ namespace Clowd.Clipboard
         /// <summary>
         /// Sets the image on the clipboard to the specified bitmap.
         /// </summary>
-        public virtual void SetImage(BitmapSource bitmap)
-        {
-            // Write PNG format as some applications do not support alpha in DIB's and
-            // also often will attempt to read PNG format first.
-            SetFormat(ClipboardFormat.Png, bitmap);
-            SetFormat(ClipboardFormat.DibV5, bitmap);
-        }
+        public abstract void SetImage(TBitmap bitmap);
 
         /// <summary>
         /// Retrieves any detectable bitmap stored on the clipboard.
         /// </summary>
-        public virtual BitmapSource GetImage()
-        {
-            var fmtPng = ClipboardFormat.Png;
-            if (TryGetFormatObject(fmtPng.Id, fmtPng.TypeObjectReader, out var png))
-                if (png != null)
-                    return png;
-
-            // Windows has "Synthesized Formats", if you ask for a CF_DIBV5 when there is only a CF_DIB, it will transparently convert
-            // from one format to the other. The issue is, if you ask for a CF_DIBV5 before you ask for a CF_DIB, and the CF_DIB is 
-            // the only real format on the clipboard, windows can corrupt the CF_DIB!!! 
-            // One quirk is that windows deterministically puts real formats in the list of present formats before it puts synthesized formats
-            // so even though we can't really tell what is synthesized or not, we can make a guess based on which comes first.
-
-            foreach (var fmt in GetPresentFormats().OfType<ClipboardFormat<BitmapSource>>())
-                if (fmt == ClipboardFormat.Bitmap || fmt == ClipboardFormat.Dib || fmt == ClipboardFormat.DibV5)
-                    if (TryGetFormatObject(fmt.Id, fmt.TypeObjectReader, out var dib))
-                        if (dib != null)
-                            return dib;
-
-            var fmtDrop = ClipboardFormat.FileDrop;
-            if (TryGetFormatObject(fmtDrop.Id, new ImageWpfFileDrop(), out var drop))
-                if (drop != null)
-                    return drop;
-
-            return null;
-        }
+        public abstract TBitmap GetImage();
 
         /// <summary>
         /// Retrieves the current file drop list on the clipboard, or returns null if there is none.
@@ -444,7 +381,7 @@ namespace Clowd.Clipboard
                 throw new InvalidOperationException("The clipboard is not yet open, please call Open() or OpenAsync() first.");
 
             if (_disposed)
-                throw new ObjectDisposedException(nameof(ClipboardHandle));
+                throw new ObjectDisposedException(nameof(ClipboardHandleBase<TBitmap>));
         }
     }
 }

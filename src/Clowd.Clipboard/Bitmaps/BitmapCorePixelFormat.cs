@@ -1,6 +1,7 @@
-﻿namespace Clowd.Clipboard.Bitmaps.Core;
+﻿#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+namespace Clowd.Clipboard.Bitmaps;
 
-internal class BitFields
+public class BitFields
 {
     public static readonly BITMASKS BITFIELDS_RGB_24 = new BITMASKS(0xff, 0xff00, 0xff0000);
     public static readonly BITMASKS BITFIELDS_BGR_24 = new BITMASKS(0xff0000, 0xff00, 0xff);
@@ -10,9 +11,9 @@ internal class BitFields
     public static readonly BITMASKS BITFIELDS_BGRA_555X = new BITMASKS(0x7c00, 0x03e0, 0x001f);
 }
 
-internal unsafe delegate byte* WritePixelToPtr(byte* ptr, byte b, byte g, byte r, byte a);
+public unsafe delegate byte* WritePixelToPtr(byte* ptr, byte b, byte g, byte r, byte a);
 
-internal unsafe class BitmapCorePixelFormat : IEquatable<BitmapCorePixelFormat>
+public unsafe class BitmapCorePixelFormat : IEquatable<BitmapCorePixelFormat>
 {
     public bool IsIndexed => BitsPerPixel < 16;
     public bool HasAlpha => Masks.maskAlpha != 0;
@@ -60,7 +61,7 @@ internal unsafe class BitmapCorePixelFormat : IEquatable<BitmapCorePixelFormat>
             byte cg = (byte)Math.Ceiling(g * mult5);
             byte cr = (byte)Math.Ceiling(r * mult5);
 
-            *dest += (ushort)(b | (g << 5) | (r << 10));
+            *dest += (ushort)(b | g << 5 | r << 10);
 
             return (byte*)dest;
         },
@@ -68,7 +69,7 @@ internal unsafe class BitmapCorePixelFormat : IEquatable<BitmapCorePixelFormat>
 
     public static readonly BitmapCorePixelFormat Bgr5551 = new BitmapCorePixelFormat
     {
-        MscmsFormat =  mscms.mscmsPxFormat.BM_x555RGB,
+        MscmsFormat = mscms.mscmsPxFormat.BM_x555RGB,
         BitsPerPixel = 16,
         Masks = BitFields.BITFIELDS_BGRA_5551,
         Write = (ptr, b, g, r, a) =>
@@ -83,7 +84,7 @@ internal unsafe class BitmapCorePixelFormat : IEquatable<BitmapCorePixelFormat>
             byte cr = (byte)Math.Ceiling(r * mult5);
             byte ca = a > 0 ? (byte)1 : (byte)0;
 
-            *dest += (ushort)(b | (g << 5) | (r << 10) | (a << 15));
+            *dest += (ushort)(b | g << 5 | r << 10 | a << 15);
 
             return (byte*)dest;
         },
@@ -91,7 +92,7 @@ internal unsafe class BitmapCorePixelFormat : IEquatable<BitmapCorePixelFormat>
 
     public static readonly BitmapCorePixelFormat Bgr565 = new BitmapCorePixelFormat
     {
-        MscmsFormat =  mscms.mscmsPxFormat.BM_565RGB,
+        MscmsFormat = mscms.mscmsPxFormat.BM_565RGB,
         BitsPerPixel = 16,
         Masks = BitFields.BITFIELDS_BGR_565,
         Write = (ptr, b, g, r, a) =>
@@ -107,7 +108,7 @@ internal unsafe class BitmapCorePixelFormat : IEquatable<BitmapCorePixelFormat>
             byte cg = (byte)Math.Ceiling(g * mult6);
             byte cr = (byte)Math.Ceiling(r * mult5);
 
-            *dest += (ushort)(b | (g << 5) | (r << 11));
+            *dest += (ushort)(b | g << 5 | r << 11);
 
             return (byte*)dest;
         },
@@ -115,7 +116,7 @@ internal unsafe class BitmapCorePixelFormat : IEquatable<BitmapCorePixelFormat>
 
     public static readonly BitmapCorePixelFormat Rgb24 = new BitmapCorePixelFormat
     {
-        MscmsFormat =  mscms.mscmsPxFormat.BM_BGRTRIPLETS,
+        MscmsFormat = mscms.mscmsPxFormat.BM_BGRTRIPLETS,
         BitsPerPixel = 24,
         Masks = BitFields.BITFIELDS_RGB_24,
         Write = (ptr, b, g, r, a) =>
@@ -129,7 +130,7 @@ internal unsafe class BitmapCorePixelFormat : IEquatable<BitmapCorePixelFormat>
 
     public static readonly BitmapCorePixelFormat Bgr24 = new BitmapCorePixelFormat
     {
-        MscmsFormat =  mscms.mscmsPxFormat.BM_RGBTRIPLETS,
+        MscmsFormat = mscms.mscmsPxFormat.BM_RGBTRIPLETS,
         BitsPerPixel = 24,
         Masks = BitFields.BITFIELDS_BGR_24,
         Write = (ptr, b, g, r, a) =>
@@ -143,13 +144,13 @@ internal unsafe class BitmapCorePixelFormat : IEquatable<BitmapCorePixelFormat>
 
     public static readonly BitmapCorePixelFormat Bgra32 = new BitmapCorePixelFormat
     {
-        MscmsFormat =  mscms.mscmsPxFormat.BM_xRGBQUADS,
+        MscmsFormat = mscms.mscmsPxFormat.BM_xRGBQUADS,
         BitsPerPixel = 32,
         Masks = BitFields.BITFIELDS_BGRA_32,
         Write = (ptr, b, g, r, a) =>
         {
             uint* dest = (uint*)ptr;
-            *dest++ = (uint)((b) | (g << 8) | (r << 16) | (a << 24));
+            *dest++ = (uint)(b | g << 8 | r << 16 | a << 24);
             return (byte*)dest;
         },
     };
@@ -191,7 +192,7 @@ internal unsafe class BitmapCorePixelFormat : IEquatable<BitmapCorePixelFormat>
 
     public bool Equals(BitmapCorePixelFormat other)
     {
-        if (other.BitsPerPixel != this.BitsPerPixel)
+        if (other.BitsPerPixel != BitsPerPixel)
             return false;
 
         return other.Masks.Equals(Masks);
@@ -202,8 +203,8 @@ internal unsafe class BitmapCorePixelFormat : IEquatable<BitmapCorePixelFormat>
         unchecked
         {
             int hash = 13;
-            hash = (hash * 7) + BitsPerPixel.GetHashCode();
-            hash = (hash * 7) + Masks.GetHashCode();
+            hash = hash * 7 + BitsPerPixel.GetHashCode();
+            hash = hash * 7 + Masks.GetHashCode();
             return hash;
         }
     }

@@ -1,8 +1,9 @@
-﻿using System.Runtime.InteropServices;
+﻿#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+using System.Runtime.InteropServices;
 
-namespace Clowd.Clipboard.Bitmaps.Core;
+namespace Clowd.Clipboard.Bitmaps;
 
-internal unsafe class StructUtil
+public unsafe class StructUtil
 {
     public static T Deserialize<T>(byte* ptr)
     {
@@ -63,7 +64,7 @@ internal unsafe class StructUtil
     {
         for (int shift = 0; shift < sizeof(uint) * 8; ++shift)
         {
-            if ((mask & (1 << shift)) != 0)
+            if ((mask & 1 << shift) != 0)
             {
                 return shift;
             }

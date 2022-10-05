@@ -1,8 +1,10 @@
-﻿using System.Runtime.InteropServices;
+﻿#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
-namespace Clowd.Clipboard.Bitmaps.Core;
+using System.Runtime.InteropServices;
 
-internal struct BITMASKS
+namespace Clowd.Clipboard.Bitmaps;
+
+public struct BITMASKS
 {
     public uint maskRed;
     public uint maskGreen;
@@ -32,10 +34,10 @@ internal struct BITMASKS
         unchecked
         {
             int hash = 13;
-            hash = (hash * 7) + (int)maskRed;
-            hash = (hash * 7) + (int)maskGreen;
-            hash = (hash * 7) + (int)maskBlue;
-            hash = (hash * 7) + (int)maskAlpha;
+            hash = hash * 7 + (int)maskRed;
+            hash = hash * 7 + (int)maskGreen;
+            hash = hash * 7 + (int)maskBlue;
+            hash = hash * 7 + (int)maskAlpha;
             return hash;
         }
     }
@@ -55,7 +57,7 @@ internal struct BITMASKS
     }
 }
 
-internal struct BITMAP_WRITE_REQUEST
+public struct BITMAP_WRITE_REQUEST
 {
     public double dpiX;
     public double dpiY;
@@ -67,7 +69,7 @@ internal struct BITMAP_WRITE_REQUEST
     public uint imgStride;
 }
 
-internal struct BITMAP_READ_DETAILS
+public struct BITMAP_READ_DETAILS
 {
     public BITMAPV5HEADER dibHeader;
     public ushort bbp;
@@ -92,7 +94,7 @@ internal struct BITMAP_READ_DETAILS
     public mscms.mscmsIntent colorProfileIntent;
 }
 
-internal enum ColorSpaceType : uint
+public enum ColorSpaceType : uint
 {
     LCS_CALIBRATED_RGB = 0,
     LCS_sRGB = 0x73524742, // 'sRGB'
@@ -101,7 +103,7 @@ internal enum ColorSpaceType : uint
     PROFILE_EMBEDDED = 1296188740,
 }
 
-internal enum Bv5Intent : uint
+public enum Bv5Intent : uint
 {
     LCS_GM_BUSINESS = 1, // Graphic / Saturation
     LCS_GM_GRAPHICS = 2, // Proof / Relative Colorimetric
@@ -109,7 +111,7 @@ internal enum Bv5Intent : uint
     LCS_GM_ABS_COLORIMETRIC = 8, // Match / Absolute Colorimetric
 }
 
-internal enum BitmapCompressionMode : uint
+public enum BitmapCompressionMode : uint
 {
     BI_RGB = 0,
     BI_RLE8 = 1,
@@ -128,7 +130,7 @@ internal enum BitmapCompressionMode : uint
 }
 
 [StructLayout(LayoutKind.Sequential)]
-internal struct BITMAPCOREHEADER // OS21BITMAPHEADER
+public struct BITMAPCOREHEADER // OS21BITMAPHEADER
 {
     // SIZE = 12
     public uint bcSize;
@@ -140,7 +142,7 @@ internal struct BITMAPCOREHEADER // OS21BITMAPHEADER
 
 // https://d3s.mff.cuni.cz/legacy/teaching/principles_of_computers/Zkouska%20Principy%20pocitacu%202017-18%20-%20varianta%2002%20-%20priloha%20-%20format%20BMP%20z%20Wiki.pdf
 [StructLayout(LayoutKind.Sequential)]
-internal struct OS22XBITMAPHEADER // 16
+public struct OS22XBITMAPHEADER // 16
 {
     public uint Size;             /* Size of this structure in bytes */
     public uint Width;            /* Bitmap width in pixels */
@@ -164,7 +166,7 @@ internal struct OS22XBITMAPHEADER // 16
 }
 
 [StructLayout(LayoutKind.Sequential)]
-internal struct BITMAPINFOHEADER
+public struct BITMAPINFOHEADER
 {
     public uint bV5Size; // uint
     public int bV5Width;
@@ -180,7 +182,7 @@ internal struct BITMAPINFOHEADER
 }
 
 [StructLayout(LayoutKind.Sequential)]
-internal struct BITMAPV3INFOHEADER
+public struct BITMAPV3INFOHEADER
 {
     public uint bV5Size;
     public int bV5Width;
@@ -200,7 +202,7 @@ internal struct BITMAPV3INFOHEADER
 }
 
 [StructLayout(LayoutKind.Sequential)]
-internal struct BITMAPV4HEADER
+public struct BITMAPV4HEADER
 {
     public uint bV5Size;
     public int bV5Width;
@@ -233,7 +235,7 @@ internal struct BITMAPV4HEADER
 }
 
 [StructLayout(LayoutKind.Sequential)]
-internal struct BITMAPV5HEADER
+public struct BITMAPV5HEADER
 {
     public uint bV5Size;
     public int bV5Width;
@@ -281,7 +283,7 @@ internal struct BITMAPV5HEADER
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 2)]
-internal struct BITMAPFILEHEADER // size = 14
+public struct BITMAPFILEHEADER // size = 14
 {
     public ushort bfType;
     public uint bfSize;
@@ -291,7 +293,7 @@ internal struct BITMAPFILEHEADER // size = 14
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-internal struct RGBQUAD
+public struct RGBQUAD
 {
     public byte rgbBlue;
     public byte rgbGreen;
@@ -300,7 +302,7 @@ internal struct RGBQUAD
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-internal struct RGBTRIPLE
+public struct RGBTRIPLE
 {
     public byte rgbBlue;
     public byte rgbGreen;
@@ -308,7 +310,7 @@ internal struct RGBTRIPLE
 }
 
 [StructLayout(LayoutKind.Sequential)]
-internal struct MASKTRIPLE
+public struct MASKTRIPLE
 {
     public uint rgbRed;
     public uint rgbGreen;
@@ -316,7 +318,7 @@ internal struct MASKTRIPLE
 }
 
 [StructLayout(LayoutKind.Sequential)]
-internal struct MASKQUAD
+public struct MASKQUAD
 {
     public uint rgbRed;
     public uint rgbGreen;

@@ -30,6 +30,18 @@ namespace Clowd.Clipboard.Formats
     }
 
     /// <summary>
+    /// Reads an Int32 from the clipboard.
+    /// </summary>
+    public class Int32DataConverter : Int32Base<int>
+    {
+        /// <inheritdoc/>
+        public override int ReadFromInt32(int val) => val;
+
+        /// <inheritdoc/>
+        public override int WriteToInt32(int obj) => obj;
+    }
+
+    /// <summary>
     /// Used by CF_LOCALE, which is stored as an integer (lcid) and is represented by <see cref="CultureInfo"/>.
     /// </summary>
     public class Locale : Int32Base<CultureInfo>
@@ -39,17 +51,5 @@ namespace Clowd.Clipboard.Formats
 
         /// <inheritdoc/>
         public override int WriteToInt32(CultureInfo obj) => obj.LCID;
-    }
-
-    /// <summary>
-    /// Converts a clipboard Drop Effect into <see cref="DragDropEffects"/>.
-    /// </summary>
-    public class DropEffect : Int32Base<DragDropEffects>
-    {
-        /// <inheritdoc/>
-        public override DragDropEffects ReadFromInt32(int val) => (DragDropEffects)val;
-
-        /// <inheritdoc/>
-        public override int WriteToInt32(DragDropEffects obj) => (int)obj;
     }
 }

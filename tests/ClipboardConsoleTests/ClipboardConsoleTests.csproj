@@ -17,6 +17,6 @@
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Clowd.Clipboard\Clowd.Clipboard.csproj" />
+    <ProjectReference Include="..\..\src\Clowd.Clipboard.Wpf\Clowd.Clipboard.Wpf.csproj" />
   </ItemGroup>
 </Project>

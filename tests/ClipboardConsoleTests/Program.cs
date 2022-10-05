@@ -33,7 +33,7 @@ namespace ConsoleTests
             //maskB = 0x001f;
 
 
-            using (var handle = new ClipboardHandle())
+            using (var handle = new ClipboardHandleWpf())
             {
                 handle.Open();
                 var formats = handle.GetPresentFormats().ToArray();

@@ -3,7 +3,6 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Clowd.Clipboard.Bitmaps.Core;
 
 namespace Clowd.Clipboard.Bitmaps;
 

@@ -47,7 +47,7 @@ namespace Clowd.Bitmaps.BitmapTests
             }
 
             File.AppendAllText(htmlPage, "</table></body></html>");
-            //Process.Start("explorer", Path.GetFullPath("render.html"));
+            Process.Start("explorer", Path.GetFullPath("render.html"));
         }
 
         static void WriteTableLine(string file, string defaultReferenceFile = null)

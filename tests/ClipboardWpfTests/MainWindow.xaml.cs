@@ -44,21 +44,17 @@ namespace WpfTests
 
         private void LoadClipImg_Click(object sender, RoutedEventArgs e)
         {
-            using (var c = new ClipboardHandle())
-            {
-                c.Open();
-                var img = c.GetImage();
-                imgClip.Source = img;
+            var img = ClipboardWpf.GetImage();
+            imgClip.Source = img;
 
-                if (img != null)
-                {
-                    // undo wpf dpi to show image at actual size
-                    var tzoom = PresentationSource.FromVisual(this).CompositionTarget.TransformToDevice.M11;
-                    imgClip.Width = img.PixelWidth / tzoom;
-                    imgClip.Height = img.PixelHeight / tzoom;
-                    Canvas.SetLeft(imgClip, (int)((imgCanvas.ActualWidth / 2) - (imgClip.Width / 2)));
-                    Canvas.SetTop(imgClip, (int)((imgCanvas.ActualHeight / 2) - (imgClip.Height / 2)));
-                }
+            if (img != null)
+            {
+                // undo wpf dpi to show image at actual size
+                var tzoom = PresentationSource.FromVisual(this).CompositionTarget.TransformToDevice.M11;
+                imgClip.Width = img.PixelWidth / tzoom;
+                imgClip.Height = img.PixelHeight / tzoom;
+                Canvas.SetLeft(imgClip, (int)((imgCanvas.ActualWidth / 2) - (imgClip.Width / 2)));
+                Canvas.SetTop(imgClip, (int)((imgCanvas.ActualHeight / 2) - (imgClip.Height / 2)));
             }
         }
 
@@ -69,11 +65,7 @@ namespace WpfTests
 
         private void CopyRefImg_Click(object sender, RoutedEventArgs e)
         {
-            using (var c = new ClipboardHandle())
-            {
-                c.Open();
-                c.SetImage(new BitmapImage(new Uri(ReferenceImagePath)));
-            }
+            ClipboardWpf.SetImage(new BitmapImage(new Uri(ReferenceImagePath)));
         }
     }
 }

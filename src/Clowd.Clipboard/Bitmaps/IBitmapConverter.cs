@@ -1,5 +1,4 @@
-﻿using Clowd.Clipboard.Bitmaps.Core;
-
+﻿
 namespace Clowd.Clipboard.Bitmaps;
 
 /// <summary>

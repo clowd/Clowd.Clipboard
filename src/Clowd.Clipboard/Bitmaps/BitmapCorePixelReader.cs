@@ -1,6 +1,7 @@
-﻿namespace Clowd.Clipboard.Bitmaps.Core;
+﻿#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+namespace Clowd.Clipboard.Bitmaps;
 
-internal unsafe class BitmapCorePixelReader
+public unsafe class BitmapCorePixelReader
 {
     public static void ConvertChannelBGRA(ref BITMAP_READ_DETAILS info, BitmapCorePixelFormat convertToFmt, byte* sourceBufferStart, byte* destBufferStart, bool preserveFakeAlpha)
     {
@@ -23,57 +24,57 @@ internal unsafe class BitmapCorePixelReader
         {
             shiftR = StructUtil.CalcShift(maskR);
             maxR = maskR >> shiftR;
-            multR = (uint)(Math.Ceiling(255d / maxR * 65536 * 256)); // bitshift << 24
+            multR = (uint)Math.Ceiling(255d / maxR * 65536 * 256); // bitshift << 24
         }
 
         if (maskG != 0)
         {
             shiftG = StructUtil.CalcShift(maskG);
             maxG = maskG >> shiftG;
-            multG = (uint)(Math.Ceiling(255d / maxG * 65536 * 256));
+            multG = (uint)Math.Ceiling(255d / maxG * 65536 * 256);
         }
 
         if (maskB != 0)
         {
             shiftB = StructUtil.CalcShift(maskB);
             maxB = maskB >> shiftB;
-            multB = (uint)(Math.Ceiling(255d / maxB * 65536 * 256));
+            multB = (uint)Math.Ceiling(255d / maxB * 65536 * 256);
         }
 
         if (maskA != 0)
         {
             shiftA = StructUtil.CalcShift(maskA);
             maxA = maskA >> shiftA;
-            multA = (uint)(Math.Ceiling(255d / maxA * 65536 * 256)); // bitshift << 24
+            multA = (uint)Math.Ceiling(255d / maxA * 65536 * 256); // bitshift << 24
         }
 
         var write = convertToFmt.Write;
         uint source_stride = StructUtil.CalcStride(nbits, width);
         uint dest_stride = StructUtil.CalcStride(convertToFmt.BitsPerPixel, width);
 
-        restartLoop:
+    restartLoop:
 
         byte b, r, g, a;
         uint i32;
         byte* source, dest;
-        int y, w, h = height, nbytes = (nbits / 8);
+        int y, w, h = height, nbytes = nbits / 8;
 
         if (hasAlphaChannel)
         {
             while (--h >= 0)
             {
                 y = height - h - 1;
-                dest = destBufferStart + ((upside_down ? y : h) * dest_stride);
-                source = sourceBufferStart + (y * source_stride);
+                dest = destBufferStart + (upside_down ? y : h) * dest_stride;
+                source = sourceBufferStart + y * source_stride;
                 w = width;
                 while (--w >= 0)
                 {
                     i32 = *(uint*)source;
 
-                    b = (byte)((((i32 & maskB) >> shiftB) * multB) >> 24);
-                    g = (byte)((((i32 & maskG) >> shiftG) * multG) >> 24);
-                    r = (byte)((((i32 & maskR) >> shiftR) * multR) >> 24);
-                    a = (byte)((((i32 & maskA) >> shiftA) * multA) >> 24);
+                    b = (byte)(((i32 & maskB) >> shiftB) * multB >> 24);
+                    g = (byte)(((i32 & maskG) >> shiftG) * multG >> 24);
+                    r = (byte)(((i32 & maskR) >> shiftR) * multR >> 24);
+                    a = (byte)(((i32 & maskA) >> shiftA) * multA >> 24);
 
                     dest = write(dest, b, g, r, a);
                     source += nbytes;
@@ -85,17 +86,17 @@ internal unsafe class BitmapCorePixelReader
             while (--h >= 0)
             {
                 y = height - h - 1;
-                dest = destBufferStart + ((upside_down ? y : h) * dest_stride);
-                source = sourceBufferStart + (y * source_stride);
+                dest = destBufferStart + (upside_down ? y : h) * dest_stride;
+                source = sourceBufferStart + y * source_stride;
                 w = width;
                 while (--w >= 0)
                 {
                     i32 = *(uint*)source;
 
-                    b = (byte)((((i32 & maskB) >> shiftB) * multB) >> 24);
-                    g = (byte)((((i32 & maskG) >> shiftG) * multG) >> 24);
-                    r = (byte)((((i32 & maskR) >> shiftR) * multR) >> 24);
-                    a = (byte)((((i32 & maskA) >> shiftA) * multA) >> 24);
+                    b = (byte)(((i32 & maskB) >> shiftB) * multB >> 24);
+                    g = (byte)(((i32 & maskG) >> shiftG) * multG >> 24);
+                    r = (byte)(((i32 & maskR) >> shiftR) * multR >> 24);
+                    a = (byte)(((i32 & maskA) >> shiftA) * multA >> 24);
 
                     if (a != 0)
                     {
@@ -114,15 +115,15 @@ internal unsafe class BitmapCorePixelReader
             while (--h >= 0)
             {
                 y = height - h - 1;
-                dest = destBufferStart + ((upside_down ? y : h) * dest_stride);
-                source = sourceBufferStart + (y * source_stride);
+                dest = destBufferStart + (upside_down ? y : h) * dest_stride;
+                source = sourceBufferStart + y * source_stride;
                 w = width;
                 while (--w >= 0)
                 {
                     i32 = *(uint*)source;
-                    b = (byte)((((i32 & maskB) >> shiftB) * multB) >> 24);
-                    g = (byte)((((i32 & maskG) >> shiftG) * multG) >> 24);
-                    r = (byte)((((i32 & maskR) >> shiftR) * multR) >> 24);
+                    b = (byte)(((i32 & maskB) >> shiftB) * multB >> 24);
+                    g = (byte)(((i32 & maskG) >> shiftG) * multG >> 24);
+                    r = (byte)(((i32 & maskR) >> shiftR) * multR >> 24);
 
                     dest = write(dest, b, g, r, 0xFF);
                     source += nbytes;
@@ -147,31 +148,31 @@ internal unsafe class BitmapCorePixelReader
         byte i4;
         byte* source;
         uint* dest;
-        int y, x, w, h = height, nbytes = (nbits / 8);
+        int y, x, w, h = height, nbytes = nbits / 8;
 
         if (nbits == 1)
         {
             while (--h >= 0)
             {
                 y = height - h - 1;
-                dest = (uint*)(destBufferStart + ((upside_down ? y : h) * dest_stride));
-                source = sourceBufferStart + (y * source_stride);
+                dest = (uint*)(destBufferStart + (upside_down ? y : h) * dest_stride);
+                source = sourceBufferStart + y * source_stride;
                 for (x = 0; x < source_stride - 1; x++)
                 {
                     i4 = *source++;
                     for (int bit = 7; bit >= 0; bit--)
                     {
-                        color = palette[(i4 & (1 << bit)) >> bit];
-                        *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                        color = palette[(i4 & 1 << bit) >> bit];
+                        *dest++ = (uint)(color.rgbBlue | color.rgbGreen << 8 | color.rgbRed << 16 | 0xFF << 24);
                     }
                 }
 
                 // last bits in a row might not make up a whole byte
                 i4 = *source++;
-                for (int bit = 7; bit >= 8 - (width - ((source_stride - 1) * 8)); bit--)
+                for (int bit = 7; bit >= 8 - (width - (source_stride - 1) * 8); bit--)
                 {
-                    color = palette[(i4 & (1 << bit)) >> bit];
-                    *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    color = palette[(i4 & 1 << bit) >> bit];
+                    *dest++ = (uint)(color.rgbBlue | color.rgbGreen << 8 | color.rgbRed << 16 | 0xFF << 24);
                 }
             }
         }
@@ -183,23 +184,23 @@ internal unsafe class BitmapCorePixelReader
             while (--h >= 0)
             {
                 y = height - h - 1;
-                dest = (uint*)(destBufferStart + ((upside_down ? y : h) * dest_stride));
-                source = sourceBufferStart + (y * source_stride);
+                dest = (uint*)(destBufferStart + (upside_down ? y : h) * dest_stride);
+                source = sourceBufferStart + y * source_stride;
                 for (x = 0; x < source_stride - 1; x++)
                 {
                     i4 = *source++;
 
                     color = palette[((i4 & 0b_1100_0000) >> 6) % pal];
-                    *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    *dest++ = (uint)(color.rgbBlue | color.rgbGreen << 8 | color.rgbRed << 16 | 0xFF << 24);
 
                     color = palette[((i4 & 0b_0011_0000) >> 4) % pal];
-                    *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    *dest++ = (uint)(color.rgbBlue | color.rgbGreen << 8 | color.rgbRed << 16 | 0xFF << 24);
 
                     color = palette[((i4 & 0b_0000_1100) >> 2) % pal];
-                    *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    *dest++ = (uint)(color.rgbBlue | color.rgbGreen << 8 | color.rgbRed << 16 | 0xFF << 24);
 
                     color = palette[((i4 & 0b_0000_0011) >> 0) % pal];
-                    *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    *dest++ = (uint)(color.rgbBlue | color.rgbGreen << 8 | color.rgbRed << 16 | 0xFF << 24);
                 }
 
                 i4 = *source++;
@@ -207,22 +208,22 @@ internal unsafe class BitmapCorePixelReader
                 if (px_remain > 0)
                 {
                     color = palette[((i4 & 0b_1100_0000) >> 6) % pal];
-                    *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    *dest++ = (uint)(color.rgbBlue | color.rgbGreen << 8 | color.rgbRed << 16 | 0xFF << 24);
                 }
                 if (px_remain > 1)
                 {
                     color = palette[((i4 & 0b_0011_0000) >> 4) % pal];
-                    *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    *dest++ = (uint)(color.rgbBlue | color.rgbGreen << 8 | color.rgbRed << 16 | 0xFF << 24);
                 }
                 if (px_remain > 2)
                 {
                     color = palette[((i4 & 0b_0000_1100) >> 2) % pal];
-                    *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    *dest++ = (uint)(color.rgbBlue | color.rgbGreen << 8 | color.rgbRed << 16 | 0xFF << 24);
                 }
                 if (px_remain > 3)
                 {
                     color = palette[((i4 & 0b_0000_0011) >> 0) % pal];
-                    *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    *dest++ = (uint)(color.rgbBlue | color.rgbGreen << 8 | color.rgbRed << 16 | 0xFF << 24);
                 }
             }
         }
@@ -232,22 +233,22 @@ internal unsafe class BitmapCorePixelReader
             while (--h >= 0)
             {
                 y = height - h - 1;
-                dest = (uint*)(destBufferStart + ((upside_down ? y : h) * dest_stride));
-                source = sourceBufferStart + (y * source_stride);
+                dest = (uint*)(destBufferStart + (upside_down ? y : h) * dest_stride);
+                source = sourceBufferStart + y * source_stride;
                 for (x = 0; x < source_stride - px_remain; x++)
                 {
                     i4 = *source++;
                     color = palette[((i4 & 0b_1111_0000) >> 4) % pal];
-                    *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    *dest++ = (uint)(color.rgbBlue | color.rgbGreen << 8 | color.rgbRed << 16 | 0xFF << 24);
                     color = palette[((i4 & 0b_0000_1111) >> 0) % pal];
-                    *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    *dest++ = (uint)(color.rgbBlue | color.rgbGreen << 8 | color.rgbRed << 16 | 0xFF << 24);
                 }
 
                 if (px_remain > 0)
                 {
                     i4 = *source++;
                     color = palette[((i4 & 0b_1111_0000) >> 4) % pal];
-                    *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    *dest++ = (uint)(color.rgbBlue | color.rgbGreen << 8 | color.rgbRed << 16 | 0xFF << 24);
                 }
             }
         }
@@ -256,14 +257,14 @@ internal unsafe class BitmapCorePixelReader
             while (--h >= 0)
             {
                 y = height - h - 1;
-                dest = (uint*)(destBufferStart + ((upside_down ? y : h) * dest_stride));
-                source = sourceBufferStart + (y * source_stride);
+                dest = (uint*)(destBufferStart + (upside_down ? y : h) * dest_stride);
+                source = sourceBufferStart + y * source_stride;
                 w = width;
                 while (--w >= 0)
                 {
                     i4 = *source++;
                     color = palette[i4 % pal];
-                    *dest++ = (uint)((color.rgbBlue) | (color.rgbGreen << 8) | (color.rgbRed << 16) | (0xFF << 24));
+                    *dest++ = (uint)(color.rgbBlue | color.rgbGreen << 8 | color.rgbRed << 16 | 0xFF << 24);
                 }
             }
         }
@@ -286,7 +287,7 @@ internal unsafe class BitmapCorePixelReader
         int height = info.imgHeight, width = info.imgWidth;
 
         var sourceBufferEnd = sourceBufferStart + info.imgDataSize;
-        var destBufferEnd = destBufferStart + (dest_stride * height);
+        var destBufferEnd = destBufferStart + dest_stride * height;
 
         byte* ptr = sourceBufferStart;
         var pal = info.imgColorTable.Length;
@@ -299,12 +300,12 @@ internal unsafe class BitmapCorePixelReader
 
         void chksrc(int bytes)
         {
-            if ((ptr + bytes) > sourceBufferEnd) throw new InvalidOperationException("Invalid RLE Compression, source outside of bounds.");
+            if (ptr + bytes > sourceBufferEnd) throw new InvalidOperationException("Invalid RLE Compression, source outside of bounds.");
         }
 
         void chkdst(int bytes)
         {
-            if ((((byte*)dest) + bytes) > destBufferEnd) throw new InvalidOperationException("Invalid RLE Compression, dest of bounds.");
+            if ((byte*)dest + bytes > destBufferEnd) throw new InvalidOperationException("Invalid RLE Compression, dest of bounds.");
         }
 
         void chkspace(int srcBytes, int destBytes)
@@ -313,9 +314,9 @@ internal unsafe class BitmapCorePixelReader
             chkdst(destBytes);
         }
 
-        while ((ptr + 2) <= sourceBufferEnd)
+        while (ptr + 2 <= sourceBufferEnd)
         {
-            dest = (uint*)(destBufferStart + ((height - y - 1) * dest_stride));
+            dest = (uint*)(destBufferStart + (height - y - 1) * dest_stride);
             dest += x;
 
             op1 = *ptr++;
@@ -350,14 +351,14 @@ internal unsafe class BitmapCorePixelReader
 
                         for (int k = 0; k < op2; k++)
                         {
-                            if ((k % 2) == 0)
+                            if (k % 2 == 0)
                             {
                                 dec8 = *ptr++;
                                 read++;
-                                c1 = palette[((byte)((dec8 & 0xF0) >> 4)) % pal];
-                                c2 = palette[((byte)(dec8 & 0x0F)) % pal];
-                                px1 = (uint)((c1.rgbBlue) | (c1.rgbGreen << 8) | (c1.rgbRed << 16) | (0xFF << 24));
-                                px2 = (uint)((c2.rgbBlue) | (c2.rgbGreen << 8) | (c2.rgbRed << 16) | (0xFF << 24));
+                                c1 = palette[(byte)((dec8 & 0xF0) >> 4) % pal];
+                                c2 = palette[(byte)(dec8 & 0x0F) % pal];
+                                px1 = (uint)(c1.rgbBlue | c1.rgbGreen << 8 | c1.rgbRed << 16 | 0xFF << 24);
+                                px2 = (uint)(c2.rgbBlue | c2.rgbGreen << 8 | c2.rgbRed << 16 | 0xFF << 24);
                             }
                             else
                             {
@@ -379,21 +380,21 @@ internal unsafe class BitmapCorePixelReader
                             dec8 = *ptr++;
                             read++;
                             c1 = palette[dec8 % pal];
-                            *dest++ = (uint)((c1.rgbBlue) | (c1.rgbGreen << 8) | (c1.rgbRed << 16) | (0xFF << 24));
+                            *dest++ = (uint)(c1.rgbBlue | c1.rgbGreen << 8 | c1.rgbRed << 16 | 0xFF << 24);
                             x++;
                         }
                     }
                     else if (nbits == 24)
                     {
                         uint dec24;
-                        chkspace(1 + (op2 * 3), op2 * 4);
+                        chkspace(1 + op2 * 3, op2 * 4);
 
                         for (int k = 0; k < op2; k++)
                         {
-                            dec24 = *((uint*)ptr);
+                            dec24 = *(uint*)ptr;
                             read += 3;
                             ptr += 3;
-                            *dest++ = (uint)(dec24 | (0xFF << 24));
+                            *dest++ = (uint)(dec24 | 0xFF << 24);
                             x++;
                         }
                     }
@@ -411,22 +412,22 @@ internal unsafe class BitmapCorePixelReader
                     op2 = *ptr++;
                     c1 = palette[((op2 & 0xF0) >> 4) % pal];
                     c2 = palette[(op2 & 0x0F) % pal];
-                    px1 = (uint)((c1.rgbBlue) | (c1.rgbGreen << 8) | (c1.rgbRed << 16) | (0xFF << 24));
-                    px2 = (uint)((c2.rgbBlue) | (c2.rgbGreen << 8) | (c2.rgbRed << 16) | (0xFF << 24));
+                    px1 = (uint)(c1.rgbBlue | c1.rgbGreen << 8 | c1.rgbRed << 16 | 0xFF << 24);
+                    px2 = (uint)(c2.rgbBlue | c2.rgbGreen << 8 | c2.rgbRed << 16 | 0xFF << 24);
                 }
                 else if (nbits == 8)
                 {
                     chksrc(1);
                     op2 = *ptr++;
                     c1 = palette[op2 % pal];
-                    px1 = px2 = (uint)((c1.rgbBlue) | (c1.rgbGreen << 8) | (c1.rgbRed << 16) | (0xFF << 24));
+                    px1 = px2 = (uint)(c1.rgbBlue | c1.rgbGreen << 8 | c1.rgbRed << 16 | 0xFF << 24);
                 }
                 else if (nbits == 24)
                 {
                     chksrc(4);
-                    dec = *((uint*)ptr);
+                    dec = *(uint*)ptr;
                     ptr += 3;
-                    px1 = px2 = (uint)(dec | (0xFF << 24));
+                    px1 = px2 = (uint)(dec | 0xFF << 24);
                 }
 
                 chkdst(op1 * 4);
@@ -470,7 +471,7 @@ internal unsafe class BitmapCorePixelReader
                     dataAvailable--;
                 }
 
-                if (c.code == codeWord >> (bitsAvailable - c.bitLength))
+                if (c.code == codeWord >> bitsAvailable - c.bitLength)
                 {
                     // we found a match, lets remove bitLength bits from the high side of code word
                     bitsAvailable -= c.bitLength;
@@ -497,7 +498,7 @@ internal unsafe class BitmapCorePixelReader
 
         while (--h >= 0)
         {
-            byte* lineStart = destBufferStart + (h * stride);
+            byte* lineStart = destBufferStart + h * stride;
             var x = 0;
 
             while (true)
@@ -524,7 +525,7 @@ internal unsafe class BitmapCorePixelReader
 
                     if (code.runLength > 0)
                     {
-                        byte* run = (lineStart + (x / 8));
+                        byte* run = lineStart + x / 8;
                         var runLength = code.runLength;
 
                         // our current position may not be aligned with a byte boundary
@@ -556,7 +557,7 @@ internal unsafe class BitmapCorePixelReader
                         // write any remaining misaligned bits at the end to the beginning of the last byte.
                         for (; runLength > 0; runLength--)
                         {
-                            *run |= (byte)(1 << (8 - runLength));
+                            *run |= (byte)(1 << 8 - runLength);
                             x++;
                         }
                     }

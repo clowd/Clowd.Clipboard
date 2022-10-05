@@ -1,5 +1,4 @@
 ﻿using System.Windows.Media.Imaging;
-using Clowd.Clipboard.Bitmaps.Core;
 
 namespace Clowd.Clipboard.Bitmaps;
 

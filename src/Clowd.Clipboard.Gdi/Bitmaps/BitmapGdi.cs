@@ -1,6 +1,5 @@
 using System.Drawing;
 using System.Drawing.Imaging;
-using Clowd.Clipboard.Bitmaps.Core;
 
 namespace Clowd.Clipboard.Bitmaps;
 

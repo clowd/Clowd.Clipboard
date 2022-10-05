@@ -1,6 +1,7 @@
-﻿using System.Runtime.InteropServices;
+﻿#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+using System.Runtime.InteropServices;
 
-namespace Clowd.Clipboard.Bitmaps.Core;
+namespace Clowd.Clipboard.Bitmaps;
 
 // http://zig.tgschultz.com/bmp_file_format.txt
 // http://paulbourke.net/dataformats/bitmaps/
@@ -8,7 +9,7 @@ namespace Clowd.Clipboard.Bitmaps.Core;
 // https://www.displayfusion.com/Discussions/View/converting-c-data-types-to-c/?ID=38db6001-45e5-41a3-ab39-8004450204b3
 // https://github.com/FlyingPumba/tp2-orga2/blob/master/entregable/src/bmp/bmp.c
 
-internal unsafe partial class BitmapCore
+public unsafe partial class BitmapCore
 {
     public const uint
         BC_READ_PRESERVE_INVALID_ALPHA = 1,
@@ -27,7 +28,7 @@ internal unsafe partial class BitmapCore
     {
         var ptr = source;
 
-        if ((sourceLength) < 12) // min header size
+        if (sourceLength < 12) // min header size
             throw new InvalidOperationException(ERR_HEOF);
 
         bool hasFileHeader = StructUtil.ReadU16(ptr) == BFH_BM;
@@ -49,7 +50,7 @@ internal unsafe partial class BitmapCore
         // we'll just unpack all the various header types we support into a standard BMPV5 header 
         // this makes subsequent code easier to maintain as it only needs to refer to one place
 
-        if ((sourceLength - offset) < 12) // min header size
+        if (sourceLength - offset < 12) // min header size
             throw new InvalidOperationException(ERR_HEOF);
 
         var header_size = StructUtil.ReadU32(ptr);
@@ -301,7 +302,7 @@ internal unsafe partial class BitmapCore
 
         // The number of entries in the palette is either 2n (where n is the number of bits per pixel) or a smaller number specified in the header
         // always allocate at least 256 entries so we can ignore bad data which seeks past the end of palette data.
-        var pallength = nbits < 16 ? (1 << nbits) : 0;
+        var pallength = nbits < 16 ? 1 << nbits : 0;
         if (bi.bV5ClrUsed > 0)
             pallength = (int)bi.bV5ClrUsed;
 
@@ -361,7 +362,7 @@ internal unsafe partial class BitmapCore
 
         uint source_stride = StructUtil.CalcStride(nbits, width);
         uint dataOffset = hasFileHeader ? fh.bfOffBits : (uint)offset;
-        uint dataSize = bi.bV5SizeImage > 0 ? bi.bV5SizeImage : (source_stride * (uint)height);
+        uint dataSize = bi.bV5SizeImage > 0 ? bi.bV5SizeImage : source_stride * (uint)height;
 
         if (dataOffset + dataSize > sourceLength)
             throw new InvalidOperationException(ERR_HEOF);
@@ -401,7 +402,7 @@ internal unsafe partial class BitmapCore
             try
             {
                 if (bi.bV5CSType == ColorSpaceType.LCS_CALIBRATED_RGB) clrsource = mscms.CreateProfileFromLogicalColorSpace(bi);
-                else if (bi.bV5CSType == ColorSpaceType.PROFILE_EMBEDDED) clrsource = mscms.OpenProfile((source + profileOffset), profileSize);
+                else if (bi.bV5CSType == ColorSpaceType.PROFILE_EMBEDDED) clrsource = mscms.OpenProfile(source + profileOffset, profileSize);
 
                 switch (bi.bV5Intent)
                 {
@@ -461,7 +462,7 @@ internal unsafe partial class BitmapCore
         bool preserveAlpha = (bcrFlags & BC_READ_PRESERVE_INVALID_ALPHA) > 0;
         bool ignoreColorProfile = (bcrFlags & BC_READ_IGNORE_COLOR_PROFILE) > 0;
 
-        if (preserveFormat && (info.imgSourceFmt != imgDestFmt))
+        if (preserveFormat && info.imgSourceFmt != imgDestFmt)
             throw new NotSupportedException("StrictPreserveFormat was set while the source and/or target format is not supported.");
 
         if (forcebgra32 && imgDestFmt != BitmapCorePixelFormat.Bgra32)
@@ -499,8 +500,8 @@ internal unsafe partial class BitmapCore
                 while (--h >= 0)
                 {
                     y = height - h - 1;
-                    byte* sourceln = sourceBufferStart + (y * stride);
-                    byte* destln = destBufferStart + (h * stride);
+                    byte* sourceln = sourceBufferStart + y * stride;
+                    byte* destln = destBufferStart + h * stride;
                     Buffer.MemoryCopy(sourceln, destln, stride, stride);
                 }
             }

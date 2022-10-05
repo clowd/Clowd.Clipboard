@@ -6,7 +6,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Clowd.Clipboard\Clowd.Clipboard.csproj" />
+    <ProjectReference Include="..\..\src\Clowd.Clipboard.Wpf\Clowd.Clipboard.Wpf.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="rgba32.png">
