@@ -7,6 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Clowd.Bitmaps.BitmapTests",
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FE8AE6E1-D42C-499A-9C8E-7E279C40B01A}"
 	ProjectSection(SolutionItems) = preProject
+		src\Directory.Build.props = src\Directory.Build.props
 		version.json = version.json
 	EndProjectSection
 EndProject
@@ -26,7 +27,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Clowd.Clipboard.Gdi", "src\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClipboardAvaloniaTest", "tests\ClipboardAvaloniaTest\ClipboardAvaloniaTest.csproj", "{16EEDB48-1309-44DC-8C86-AD52BCF67EE3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clowd.Clipboard.Avalonia", "src\Clowd.Clipboard.Avalonia\Clowd.Clipboard.Avalonia.csproj", "{9C00FB18-5599-4C8D-8093-C04F04738A7E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Clowd.Clipboard.Avalonia", "src\Clowd.Clipboard.Avalonia\Clowd.Clipboard.Avalonia.csproj", "{9C00FB18-5599-4C8D-8093-C04F04738A7E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
