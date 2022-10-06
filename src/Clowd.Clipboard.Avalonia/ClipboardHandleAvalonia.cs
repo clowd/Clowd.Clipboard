@@ -1,0 +1,123 @@
+﻿using Avalonia.Media.Imaging;
+using Clowd.Clipboard.Formats;
+using System;
+using System.Collections.Generic;
+using System.Drawing.Imaging;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Clowd.Clipboard;
+
+/// <summary>
+/// Provides static methods for easy access to some of the most basic functionality of <see cref="ClipboardHandleAvalonia"/>.
+/// </summary>
+[SupportedOSPlatform("windows")]
+public class ClipboardAvalonia : ClipboardStaticBase<ClipboardHandleAvalonia, Bitmap>
+{
+    private ClipboardAvalonia() { }
+}
+
+/// <inheritdoc/>
+[SupportedOSPlatform("windows")]
+public class ClipboardHandleAvalonia : ClipboardHandleBase<Bitmap>
+{
+    /// <summary>
+    /// Sets the image on the clipboard to the specified bitmap.
+    /// </summary>
+    public override void SetImage(Bitmap bitmap)
+    {
+        using var ms = new MemoryStream();
+        bitmap.Save(ms);
+
+        using var gdi = new System.Drawing.Bitmap(ms);
+
+        // Write PNG format as some applications do not support alpha in DIB's and
+        // also often will attempt to read PNG format first.
+        SetFormatObject(ClipboardFormat.Png.Id, gdi, new ImageGdiBitmap(ImageFormat.Png));
+        SetFormatObject(ClipboardFormat.DibV5.Id, gdi, new ImageGdiDibV5());
+    }
+
+    /// <summary>
+    /// Retrieves any detectable bitmap stored on the clipboard.
+    /// </summary>
+    public override Bitmap GetImage()
+    {
+        using var gdi = GetSystemBitmap();
+
+        if (gdi == null)
+            return null;
+
+        var bitmapData = gdi.LockBits(
+            new System.Drawing.Rectangle(0, 0, gdi.Width, gdi.Height),
+            ImageLockMode.ReadOnly,
+            PixelFormat.Format32bppArgb);
+
+        var bmp = new Bitmap(
+            Avalonia.Platform.PixelFormat.Bgra8888,
+            Avalonia.Platform.AlphaFormat.Unpremul,
+            bitmapData.Scan0,
+            new Avalonia.PixelSize(bitmapData.Width, bitmapData.Height),
+            new Avalonia.Vector(96, 96),
+            bitmapData.Stride);
+
+        gdi.UnlockBits(bitmapData);
+
+        return bmp;
+    }
+
+    /// <summary>
+    /// Gets a bitmap from the clipboard as a <see cref="System.Drawing.Bitmap"/>.
+    /// </summary>
+    protected virtual System.Drawing.Bitmap GetSystemBitmap()
+    {
+        var formats = GetPresentFormats().ToArray();
+
+        var fmtPng = ClipboardFormat.Png;
+        if (TryGetFormatObject(fmtPng.Id, new ImageGdiBitmap(ImageFormat.Png), out var png))
+            if (png != null)
+                return png;
+
+        // Windows has "Synthesized Formats", if you ask for a CF_DIBV5 when there is only a CF_DIB, it will transparently convert
+        // from one format to the other. The issue is, if you ask for a CF_DIBV5 before you ask for a CF_DIB, and the CF_DIB is 
+        // the only real format on the clipboard, windows can corrupt the CF_DIB!!! 
+        // One quirk is that windows deterministically puts real formats in the list of present formats before it puts synthesized formats
+        // so even though we can't really tell what is synthesized or not, we can make a guess based on which comes first.
+
+        Dictionary<ClipboardFormat, IDataConverter<System.Drawing.Bitmap>> gdiFormats = new()
+        {
+            { ClipboardFormat.Bitmap, new ImageGdiHandle() },
+            { ClipboardFormat.Dib, new ImageGdiDib() },
+            { ClipboardFormat.DibV5, new ImageGdiDibV5() },
+        };
+
+        foreach (var fmt in formats)
+            if (fmt == ClipboardFormat.Bitmap || fmt == ClipboardFormat.Dib || fmt == ClipboardFormat.DibV5)
+                if (TryGetFormatObject(fmt.Id, gdiFormats[fmt], out var dib))
+                    if (dib != null)
+                        return dib;
+
+        Dictionary<ClipboardFormat, IDataConverter<System.Drawing.Bitmap>> imageFormats = new()
+        {
+            { ClipboardFormat.Tiff, new ImageGdiBitmap(ImageFormat.Tiff) },
+            { ClipboardFormat.Jpg, new ImageGdiBitmap(ImageFormat.Jpeg) },
+            { ClipboardFormat.Jpeg, new ImageGdiBitmap(ImageFormat.Jpeg) },
+            { ClipboardFormat.Jfif, new ImageGdiBitmap(ImageFormat.Jpeg) },
+            { ClipboardFormat.Gif, new ImageGdiBitmap(ImageFormat.Gif) },
+            { ClipboardFormat.Png, new ImageGdiBitmap(ImageFormat.Png) },
+        };
+
+        foreach (var fmt in formats)
+            if (imageFormats.ContainsKey(fmt))
+                if (TryGetFormatObject(fmt.Id, imageFormats[fmt], out var img))
+                    if (img != null)
+                        return img;
+
+        var fmtDrop = ClipboardFormat.FileDrop;
+        if (TryGetFormatObject(fmtDrop.Id, new ImageGdiFileDrop(), out var drop))
+            if (drop != null)
+                return drop;
+
+        return null;
+    }
+}
