@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
+  
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <ProjectName Condition=" '$(ProjectName)' == '' ">$(MSBuildProjectName)</ProjectName>
@@ -12,9 +13,11 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>10</LangVersion>
     <Authors>caesay</Authors>
+    <Copyright>Caelan Sayler</Copyright>
     <PackageProjectUrl>https://github.com/clowd/Clowd.Clipboard</PackageProjectUrl>
     <RepositoryUrl>https://github.com/clowd/Clowd.Clipboard</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>Clowd_200.png</PackageIcon>
     <Description>A lightweight windows clipboard and bitmap parsing library.</Description>
     <PackageTags>windows;clipboard;bitmaps;dib;parser;interop;gdi;wpf;avalonia;avaloniaui</PackageTags>
     <SignAssembly>True</SignAssembly>
@@ -28,4 +31,9 @@
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.4.*" PrivateAssets="All" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All"/>
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\Clowd_200.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
 </Project>
