@@ -22,6 +22,7 @@ namespace Clowd.Clipboard.Formats
     /// <summary>
     /// A class which reads the underlying HGlobal into an array of bytes.
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public class BytesDataConverter : BytesDataConverterBase<byte[]>
     {
         /// <inheritdoc/>
@@ -34,6 +35,7 @@ namespace Clowd.Clipboard.Formats
     /// <summary>
     /// A base class which reads the underlying HGlobal into an array of bytes for further processing.
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public abstract class BytesDataConverterBase<T> : IDataConverter<T>
     {
         /// <summary>
@@ -96,6 +98,7 @@ namespace Clowd.Clipboard.Formats
     /// <summary>
     /// A base class which locks an HGlobal to retrieve the underlying data pointer for further processing
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public abstract class HandleDataConverterBase<T> : IDataConverter<T>
     {
         /// <summary>

@@ -12,12 +12,14 @@ namespace Clowd.Clipboard;
 /// <summary>
 /// Provides static methods for easy access to some of the most basic functionality of <see cref="ClipboardHandleGdi"/>.
 /// </summary>
+[SupportedOSPlatform("windows")]
 public class ClipboardGdi : ClipboardStaticBase<ClipboardHandleGdi, Bitmap>
 {
     private ClipboardGdi() { }
 }
 
 /// <inheritdoc/>
+[SupportedOSPlatform("windows")]
 public class ClipboardHandleGdi : ClipboardHandleBase<Bitmap>
 {
     /// <summary>

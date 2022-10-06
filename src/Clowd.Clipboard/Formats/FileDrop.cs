@@ -6,6 +6,7 @@ namespace Clowd.Clipboard.Formats
     /// <summary>
     /// Converter for native windows file drop lists containing a list of file paths.
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public class FileDrop : HandleDataConverterBase<string[]>
     {
         const int PATH_MAX_LEN = 260;

@@ -10,6 +10,7 @@ namespace Clowd.Clipboard
     /// A class containing a list of all built-in registered clipboard types, as well as 
     /// helper functions for registering new custom formats.
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public class ClipboardFormat : IEquatable<ClipboardFormat>
     {
         // this is a good reference for formats
@@ -249,6 +250,7 @@ namespace Clowd.Clipboard
     /// A clipboard format containing a custom data converter, allowing it to be transformed into 
     /// a managed type easily.
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public class ClipboardFormat<T> : ClipboardFormat
     {
         /// <summary>

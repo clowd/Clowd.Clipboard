@@ -8,6 +8,7 @@ namespace Clowd.Clipboard.Bitmaps;
 /// tries to do a better job than Gdi+ does in terms of coverage and it also tries to handle some nuances of how other native 
 /// applications write bitmaps especially when reading from or writing to the clipboard.
 /// </summary>
+[SupportedOSPlatform("windows")]
 public unsafe class BitmapGdi : BitmapConverterStaticBase<BitmapGdi, Bitmap>
 {
     /// <inheritdoc/>

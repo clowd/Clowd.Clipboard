@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace Clowd.Clipboard.Formats
 {
+    [SupportedOSPlatform("windows")]
     internal class ImageGdiBitmap : BytesDataConverterBase<Bitmap>
     {
         private readonly ImageFormat format;

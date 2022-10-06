@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\Clowd.Clipboard\Globals.cs" Link="Globals.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Clowd.Clipboard\Clowd.Clipboard.csproj" />
   </ItemGroup>
 

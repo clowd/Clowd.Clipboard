@@ -9,6 +9,7 @@ namespace Clowd.Clipboard
     /// <summary>
     /// The base class for creating a static clipboard helper.
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public class ClipboardStaticBase<THandle, TBitmap>
         where THandle : ClipboardHandleBase<TBitmap>, new()
     {

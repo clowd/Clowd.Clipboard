@@ -5,6 +5,7 @@ namespace Clowd.Clipboard.Formats;
 /// <summary>
 /// Data converter for translating CF_BITMAP (gdi image handle) into a WPF BitmapSource.
 /// </summary>
+[SupportedOSPlatform("windows")]
 public class ImageGdiHandle : IDataConverter<Bitmap>
 {
     /// <inheritdoc/>

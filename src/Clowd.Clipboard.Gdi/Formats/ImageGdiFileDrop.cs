@@ -6,6 +6,7 @@ namespace Clowd.Clipboard.Formats;
 /// <summary>
 /// Reads an image stored in a file drop list as a WPF BitmapSource.
 /// </summary>
+[SupportedOSPlatform("windows")]
 public class ImageGdiFileDrop : HandleDataConverterBase<Bitmap>
 {
     private static string[] _knownImageExt = new[]

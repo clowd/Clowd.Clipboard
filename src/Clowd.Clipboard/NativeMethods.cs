@@ -3,6 +3,7 @@ using System.Text;
 
 namespace Clowd.Clipboard
 {
+    [SupportedOSPlatform("windows")]
     internal class NativeMethods
     {
         public const int S_OK = 0x00000000;

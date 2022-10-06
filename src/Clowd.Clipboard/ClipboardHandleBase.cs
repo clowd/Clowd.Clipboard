@@ -12,6 +12,7 @@ namespace Clowd.Clipboard
     /// open for too long will prevent other applications from accessing the clipboard, and may 
     /// even cause them to freeze for a time.
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public abstract class ClipboardHandleBase<TBitmap> : IDisposable
     {
         private const int RETRY_COUNT = 10;

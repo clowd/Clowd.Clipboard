@@ -10,6 +10,7 @@ namespace Clowd.Clipboard
     /// <summary>
     /// Represents a static HWND window responsible for owning the clipboard when it is open.
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public static class ClipboardWindow
     {
         /// <summary>

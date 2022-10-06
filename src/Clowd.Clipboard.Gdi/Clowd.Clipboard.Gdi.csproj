@@ -1,11 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net461;net5.0-windows;net6.0-windows</TargetFrameworks>
+    <TargetFrameworks>net461;netstandard2.0;net5.0;net6.0</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>Clowd.Clipboard</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Clowd.Clipboard\Globals.cs" Link="Globals.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Clowd.Clipboard\Clowd.Clipboard.csproj" />
