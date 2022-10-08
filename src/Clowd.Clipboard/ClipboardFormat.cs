@@ -91,11 +91,7 @@ public class ClipboardFormat : IEquatable<ClipboardFormat>
     /// <summary> XAML encoded in UTF-8. </summary>
     public static readonly ClipboardFormat<string> Xaml = DefaultFormat("Xaml", new TextUtf8());
     /// <summary> JPEG image format. </summary>
-    public static readonly ClipboardFormat Jpg = DefaultFormat("JPG");
-    /// <summary> JPEG image format. </summary>
     public static readonly ClipboardFormat Jpeg = DefaultFormat("JPEG");
-    /// <summary> JPEG image format. </summary>
-    public static readonly ClipboardFormat Jfif = DefaultFormat("Jfif");
     /// <summary> GIF image format. </summary>
     public static readonly ClipboardFormat Gif = DefaultFormat("Gif");
     /// <summary> PNG image format. </summary>
@@ -106,9 +102,9 @@ public class ClipboardFormat : IEquatable<ClipboardFormat>
     [Obsolete] public static readonly ClipboardFormat<string> FileName = DefaultFormat("FileName", new TextAnsi());
     /// <summary> Legacy format for storing a single file path on the clipboard as a widechar string. </summary>
     [Obsolete] public static readonly ClipboardFormat<string> FileNameW = DefaultFormat("FileNameW", new TextUnicode());
-    /// <summary> Legacy format for storing a single file path on the clipboard as an asni string. </summary>
-    public static readonly ClipboardFormat<string> UniformResourceLocator = DefaultFormat("UniformResourceLocator", new TextAnsi());
-    /// <summary> Legacy format for storing a single file path on the clipboard as a widechar string. </summary>
+    /// <summary> A URL on the clipboard as an asni string. </summary>
+    [Obsolete] public static readonly ClipboardFormat<string> UniformResourceLocator = DefaultFormat("UniformResourceLocator", new TextAnsi());
+    /// <summary> A URL on the clipboard as a widechar string. </summary>
     public static readonly ClipboardFormat<string> UniformResourceLocatorW = DefaultFormat("UniformResourceLocatorW", new TextUnicode());
 
     /// <summary>
@@ -227,6 +223,14 @@ public class ClipboardFormat : IEquatable<ClipboardFormat>
             throw new Win32Exception();
 
         return new ClipboardFormat<T>(formatId, formatName, converter);
+    }
+
+    /// <summary>
+    /// Creates a copy of this clipboard format with the specified data converter.
+    /// </summary>
+    public ClipboardFormat<T> WithConverter<T>(IDataConverter<T> converter)
+    {
+        return new ClipboardFormat<T>(Id, Name, converter);
     }
 
     /// <inheritdoc/>

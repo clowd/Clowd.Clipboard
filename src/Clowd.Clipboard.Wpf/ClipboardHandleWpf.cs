@@ -17,71 +17,43 @@ public class ClipboardWpf : ClipboardStaticBase<ClipboardHandleWpf, BitmapSource
 }
 
 /// <inheritdoc/>
-public class ClipboardHandleWpf : ClipboardHandleBase<BitmapSource>
+public class ClipboardHandleWpf : ClipboardHandlePlatformBase<BitmapSource>, IClipboardHandlePlatform<BitmapSource>
 {
-    /// <summary>
-    /// Sets the image on the clipboard to the specified bitmap.
-    /// </summary>
-    public override void SetImage(BitmapSource bitmap)
+    /// <inheritdoc/>
+    public void SetImage(BitmapSource bitmap) => SetImageImpl(bitmap);
+
+    /// <inheritdoc/>
+    public BitmapSource GetImage() => GetImageImpl();
+
+    /// <inheritdoc/>
+    protected override BitmapSource LoadFromFile(string filePath)
     {
-        // Write PNG format as some applications do not support alpha in DIB's and
-        // also often will attempt to read PNG format first.
-        SetFormatObject(ClipboardFormat.Png.Id, bitmap, new ImageWpfBasicEncoderPng());
-        SetFormatObject(ClipboardFormat.DibV5.Id, bitmap, new ImageWpfDibV5());
+        var bi = new BitmapImage();
+        bi.BeginInit();
+        bi.UriSource = new Uri(filePath);
+        bi.CacheOption = BitmapCacheOption.OnLoad;
+        bi.EndInit();
+        return bi;
     }
 
-    /// <summary>
-    /// Retrieves any detectable bitmap stored on the clipboard.
-    /// </summary>
-    public override BitmapSource GetImage()
-    {
-        var formats = GetPresentFormats().ToArray();
+    /// <inheritdoc/>
+    protected override IDataConverter<BitmapSource> GetJpegConverter() => new ImageWpfBasicEncoderJpeg();
 
-        var fmtPng = ClipboardFormat.Png;
-        if (TryGetFormatObject(fmtPng.Id, new ImageWpfBasicEncoderPng(), out var png))
-            if (png != null)
-                return png;
+    /// <inheritdoc/>
+    protected override IDataConverter<BitmapSource> GetTiffConverter() => new ImageWpfBasicEncoderTiff();
 
-        // Windows has "Synthesized Formats", if you ask for a CF_DIBV5 when there is only a CF_DIB, it will transparently convert
-        // from one format to the other. The issue is, if you ask for a CF_DIBV5 before you ask for a CF_DIB, and the CF_DIB is 
-        // the only real format on the clipboard, windows can corrupt the CF_DIB!!! 
-        // One quirk is that windows deterministically puts real formats in the list of present formats before it puts synthesized formats
-        // so even though we can't really tell what is synthesized or not, we can make a guess based on which comes first.
+    /// <inheritdoc/>
+    protected override IDataConverter<BitmapSource> GetGifConverter() => new ImageWpfBasicEncoderGif();
 
-        Dictionary<ClipboardFormat, IDataConverter<BitmapSource>> gdiFormats = new()
-        {
-            { ClipboardFormat.Bitmap, new ImageBitmap() },
-            { ClipboardFormat.Dib, new ImageWpfDib() },
-            { ClipboardFormat.DibV5, new ImageWpfDibV5() },
-        };
+    /// <inheritdoc/>
+    protected override IDataConverter<BitmapSource> GetPngConverter() => new ImageWpfBasicEncoderPng();
 
-        foreach (var fmt in formats)
-            if (fmt == ClipboardFormat.Bitmap || fmt == ClipboardFormat.Dib || fmt == ClipboardFormat.DibV5)
-                if (TryGetFormatObject(fmt.Id, gdiFormats[fmt], out var dib))
-                    if (dib != null)
-                        return dib;
+    /// <inheritdoc/>
+    protected override IDataConverter<BitmapSource> GetGdiHandleConverter() => new ImageBitmap();
 
-        Dictionary<ClipboardFormat, IDataConverter<BitmapSource>> imageFormats = new()
-        {
-            { ClipboardFormat.Tiff, new ImageWpfBasicEncoderTiff() },
-            { ClipboardFormat.Jpg, new ImageWpfBasicEncoderJpeg() },
-            { ClipboardFormat.Jpeg, new ImageWpfBasicEncoderJpeg() },
-            { ClipboardFormat.Jfif, new ImageWpfBasicEncoderJpeg() },
-            { ClipboardFormat.Gif, new ImageWpfBasicEncoderGif() },
-            { ClipboardFormat.Png, new ImageWpfBasicEncoderPng() },
-        };
+    /// <inheritdoc/>
+    protected override IDataConverter<BitmapSource> GetDibConverter() => new ImageWpfDib();
 
-        foreach (var fmt in formats)
-            if (imageFormats.ContainsKey(fmt))
-                if (TryGetFormatObject(fmt.Id, imageFormats[fmt], out var img))
-                    if (img != null)
-                        return img;
-
-        var fmtDrop = ClipboardFormat.FileDrop;
-        if (TryGetFormatObject(fmtDrop.Id, new ImageWpfFileDrop(), out var drop))
-            if (drop != null)
-                return drop;
-
-        return null;
-    }
+    /// <inheritdoc/>
+    protected override IDataConverter<BitmapSource> GetDibV5Converter() => new ImageWpfDibV5();
 }
