@@ -246,7 +246,13 @@ public class ClipboardFormat : IEquatable<ClipboardFormat>
     public override int GetHashCode() => Id.GetHashCode();
 
     /// <inheritdoc/>
-    public bool Equals(ClipboardFormat other) => other.Id == Id;
+    public bool Equals(ClipboardFormat other) => other?.Id == Id;
+
+    /// <inheritdoc/>
+    public static bool operator !=(ClipboardFormat x, ClipboardFormat y) => !(x == y);
+
+    /// <inheritdoc/>
+    public static bool operator ==(ClipboardFormat x, ClipboardFormat y) => x?.Id == y?.Id;
 }
 
 /// <summary>
