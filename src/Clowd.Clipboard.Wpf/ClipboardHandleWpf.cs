@@ -50,5 +50,5 @@ public class ClipboardHandleWpf : ClipboardHandlePlatformBase<BitmapSource>, ICl
     protected override IDataConverter<BitmapSource> GetDibConverter() => new DibToWicBitmapConverter();
 
     /// <inheritdoc/>
-    protected override IDataConverter<BitmapSource> GetDibV5Converter() => new DibV5ToBitmapSource();
+    protected override IDataConverter<BitmapSource> GetDibV5Converter() => new DibV5ToWicBitmapConverter();
 }

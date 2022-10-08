@@ -21,7 +21,7 @@ public abstract class ClipboardHandleGdiBase : ClipboardHandlePlatformBase<Bitma
     protected override IDataConverter<Bitmap> GetDibConverter() => new DibToGdiBitmapConverter();
 
     /// <inheritdoc/>
-    protected override IDataConverter<Bitmap> GetDibV5Converter() => new DibV5ToBitmap();
+    protected override IDataConverter<Bitmap> GetDibV5Converter() => new DibV5ToGdiBitmapConverter();
 
     /// <inheritdoc/>
     protected override IDataConverter<Bitmap> GetGdiHandleConverter() => new GdiHandleToGdiBitmapConverter();

@@ -29,7 +29,7 @@ public unsafe class DibToWicBitmapConverter : BytesDataConverterBase<BitmapSourc
 /// <summary>
 /// Converts a CF_DIBV5 to/from a WPF BitmapSource.
 /// </summary>
-public unsafe class DibV5ToBitmapSource : DibToWicBitmapConverter
+public unsafe class DibV5ToWicBitmapConverter : DibToWicBitmapConverter
 {
     /// <inheritdoc/>
     public override byte[] WriteToBytes(BitmapSource obj)

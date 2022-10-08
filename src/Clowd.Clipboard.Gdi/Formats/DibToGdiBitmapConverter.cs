@@ -26,7 +26,7 @@ public unsafe class DibToGdiBitmapConverter : BytesDataConverterBase<Bitmap>
 /// Converts a CF_DIBV5 to/from a WPF BitmapSource.
 /// </summary>
 [SupportedOSPlatform("windows")]
-public unsafe class DibV5ToBitmap : DibToGdiBitmapConverter
+public unsafe class DibV5ToGdiBitmapConverter : DibToGdiBitmapConverter
 {
     /// <inheritdoc/>
     public override byte[] WriteToBytes(Bitmap obj)
