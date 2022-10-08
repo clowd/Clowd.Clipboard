@@ -1,5 +1,4 @@
 ﻿using System.Drawing;
-using System.Windows;
 using System.Windows.Media.Imaging;
 using PixelFormats = System.Windows.Media.PixelFormats;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;

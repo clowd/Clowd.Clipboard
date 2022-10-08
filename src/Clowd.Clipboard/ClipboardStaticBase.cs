@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Clowd.Clipboard;
+﻿namespace Clowd.Clipboard;
 
 /// <summary>
 /// The base class for creating a static clipboard helper.

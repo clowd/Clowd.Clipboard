@@ -1,9 +1,4 @@
-﻿using Clowd.Clipboard.Bitmaps;
-using Clowd.Clipboard.Formats;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Drawing;
-using System.Runtime.InteropServices;
+﻿using Clowd.Clipboard.Formats;
 
 namespace Clowd.Clipboard;
 

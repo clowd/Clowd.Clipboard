@@ -2,7 +2,6 @@
 using System.ComponentModel;
 using System.Globalization;
 using System.Text;
-using System.Windows;
 
 namespace Clowd.Clipboard;
 
