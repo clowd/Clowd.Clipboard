@@ -43,7 +43,7 @@ public class ClipboardFormat : IEquatable<ClipboardFormat>
     // === STANDARD FORMATS ===
 
     /// <summary> CF_TEXT built-in, possibly synthesized format. Represents text encoded as Ansi. </summary>
-    public static readonly ClipboardFormat<string> Text = DefaultFormat(CF_TEXT, "Text", new TextAnsi());
+    public static readonly ClipboardFormat<string> Text = DefaultFormat(CF_TEXT, "Text", new TextAnsiConverter());
     /// <summary> CF_BITMAP built-in, possibly synthesized format. Represents image data stored as a GDI handle to a Device Dependent Bitmap. </summary>
     public static readonly ClipboardFormat Bitmap = DefaultFormat(CF_BITMAP, "Bitmap");
     /// <summary> CF_METAFILEPICT built-in format. Handle to a metafile picture format as defined by the METAFILEPICT structure. </summary>
@@ -55,7 +55,7 @@ public class ClipboardFormat : IEquatable<ClipboardFormat>
     /// <summary> CF_TIFF built-in format. Tagged-image file format. </summary>
     public static readonly ClipboardFormat Tiff = DefaultFormat(CF_TIFF, "TaggedImageFileFormat");
     /// <summary> CF_OEMTEXT built-in format. Text format containing characters in the OEM character set. </summary>
-    public static readonly ClipboardFormat<string> OemText = DefaultFormat(CF_OEMTEXT, "OEMText", new TextAnsi());
+    public static readonly ClipboardFormat<string> OemText = DefaultFormat(CF_OEMTEXT, "OEMText", new TextAnsiConverter());
     /// <summary> CF_DIB built-in, possibly synthesized format. A memory object containing a BITMAPINFO structure followed by the bitmap bits. </summary>
     public static readonly ClipboardFormat Dib = DefaultFormat(CF_DIB, "DeviceIndependentBitmap");
     /// <summary> CF_PALETTE built-in format. Handle to a color palette. Whenever an application places data in the clipboard that depends
@@ -68,13 +68,13 @@ public class ClipboardFormat : IEquatable<ClipboardFormat>
     /// <summary> CF_WAVE built-in format. Represents audio data in one of the standard wave formats, such as 11 kHz or 22 kHz PCM. </summary>
     public static readonly ClipboardFormat WaveAudio = DefaultFormat(CF_WAVE, "WaveAudio");
     /// <summary> CF_UNICODETEXT built-in, possibly synthesized format. Represents text encoded as widechar. </summary>
-    public static readonly ClipboardFormat<string> UnicodeText = DefaultFormat(CF_UNICODETEXT, "UnicodeText", new TextUnicode());
+    public static readonly ClipboardFormat<string> UnicodeText = DefaultFormat(CF_UNICODETEXT, "UnicodeText", new TextUnicodeConverter());
     /// <summary> CF_ENHMETAFILE built-in format. A handle to an enhanced metafile (HENHMETAFILE). </summary>
     public static readonly ClipboardFormat EnhancedMetafile = DefaultFormat(CF_ENHMETAFILE, "EnhancedMetafile");
     /// <summary> CF_HDROP built-in format. A handle to type HDROP that identifies a list of files. </summary>
-    public static readonly ClipboardFormat<string[]> FileDrop = DefaultFormat(CF_HDROP, "FileDrop", new FileDrop());
+    public static readonly ClipboardFormat<string[]> FileDrop = DefaultFormat(CF_HDROP, "FileDrop", new FileDropConverter());
     /// <summary> CF_LOCALE built-in format. The data is a handle (HGLOBAL) to the locale identifier (LCID) associated with text in the clipboard. </summary>
-    public static readonly ClipboardFormat<CultureInfo> Locale = DefaultFormat(CF_LOCALE, "Locale", new Locale());
+    public static readonly ClipboardFormat<CultureInfo> Locale = DefaultFormat(CF_LOCALE, "Locale", new LocaleConverter());
     /// <summary> CF_DIBV5 built-in, possibly synthesized format. 
     /// A memory object containing a BITMAPV5HEADER structure followed by the bitmap color space information and the bitmap bits. </summary>
     public static readonly ClipboardFormat DibV5 = DefaultFormat(CF_DIBV5, "Format17");
@@ -82,13 +82,13 @@ public class ClipboardFormat : IEquatable<ClipboardFormat>
     // === CUSTOM FORMATS ===
 
     /// <summary> HTML encoded in UTF-8. </summary>
-    public static readonly ClipboardFormat<string> Html = DefaultFormat("HTML Format", new TextUtf8());
+    public static readonly ClipboardFormat<string> Html = DefaultFormat("HTML Format", new TextUtf8Converter());
     /// <summary> Rich text format encoded in ANSI. </summary>
-    public static readonly ClipboardFormat<string> Rtf = DefaultFormat("Rich Text Format", new TextAnsi());
+    public static readonly ClipboardFormat<string> Rtf = DefaultFormat("Rich Text Format", new TextAnsiConverter());
     /// <summary> CSV encoded in ANSI. </summary>
-    public static readonly ClipboardFormat<string> Csv = DefaultFormat("CSV", new TextAnsi());
+    public static readonly ClipboardFormat<string> Csv = DefaultFormat("CSV", new TextAnsiConverter());
     /// <summary> XAML encoded in UTF-8. </summary>
-    public static readonly ClipboardFormat<string> Xaml = DefaultFormat("Xaml", new TextUtf8());
+    public static readonly ClipboardFormat<string> Xaml = DefaultFormat("Xaml", new TextUtf8Converter());
     /// <summary> JPEG image format. </summary>
     public static readonly ClipboardFormat Jpeg = DefaultFormat("JPEG");
     /// <summary> GIF image format. </summary>
@@ -98,13 +98,13 @@ public class ClipboardFormat : IEquatable<ClipboardFormat>
     /// <summary> Specifies the user action that created the current clipboard state (eg. copied or cut files to clipboard). </summary>
     public static readonly ClipboardFormat<int> DropEffect = DefaultFormat("Preferred DropEffect", new Int32DataConverter());
     /// <summary> Legacy format for storing a single file path on the clipboard as an asni string. </summary>
-    [Obsolete] public static readonly ClipboardFormat<string> FileName = DefaultFormat("FileName", new TextAnsi());
+    [Obsolete] public static readonly ClipboardFormat<string> FileName = DefaultFormat("FileName", new TextAnsiConverter());
     /// <summary> Legacy format for storing a single file path on the clipboard as a widechar string. </summary>
-    [Obsolete] public static readonly ClipboardFormat<string> FileNameW = DefaultFormat("FileNameW", new TextUnicode());
+    [Obsolete] public static readonly ClipboardFormat<string> FileNameW = DefaultFormat("FileNameW", new TextUnicodeConverter());
     /// <summary> A URL on the clipboard as an asni string. </summary>
-    [Obsolete] public static readonly ClipboardFormat<string> UniformResourceLocator = DefaultFormat("UniformResourceLocator", new TextAnsi());
+    [Obsolete] public static readonly ClipboardFormat<string> UniformResourceLocator = DefaultFormat("UniformResourceLocator", new TextAnsiConverter());
     /// <summary> A URL on the clipboard as a widechar string. </summary>
-    public static readonly ClipboardFormat<string> UniformResourceLocatorW = DefaultFormat("UniformResourceLocatorW", new TextUnicode());
+    public static readonly ClipboardFormat<string> UniformResourceLocatorW = DefaultFormat("UniformResourceLocatorW", new TextUnicodeConverter());
 
     /// <summary>
     /// The Id of this clipboard format. Could be a built-in format like CF_TEXT or CF_BITMAP, 

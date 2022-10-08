@@ -7,14 +7,14 @@ namespace Clowd.Clipboard.Formats;
 /// Converts bitmap bytes to a specific encoder format: eg. PNG or TIFF
 /// </summary>
 [SupportedOSPlatform("windows")]
-public class ImageGdiBitmap : BytesDataConverterBase<Bitmap>
+public class BytesToGdiBitmapConverter : BytesDataConverterBase<Bitmap>
 {
     private readonly ImageFormat format;
 
     /// <summary>
-    /// Creates a <see cref="ImageGdiBitmap"/> with the specified encoding.
+    /// Creates a <see cref="BytesToGdiBitmapConverter"/> with the specified encoding.
     /// </summary>
-    public ImageGdiBitmap(ImageFormat format)
+    public BytesToGdiBitmapConverter(ImageFormat format)
     {
         this.format = format;
     }

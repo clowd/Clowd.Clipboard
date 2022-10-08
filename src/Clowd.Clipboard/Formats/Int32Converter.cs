@@ -6,7 +6,7 @@ namespace Clowd.Clipboard.Formats;
 /// <summary>
 /// Base class to store and read 32-bit integers on the clipboard and convert them to a managed type (eg. enums).
 /// </summary>
-public abstract class Int32Base<T> : HandleDataConverterBase<T>
+public abstract class Int32DataConverterBase<T> : HandleDataConverterBase<T>
 {
     /// <summary>
     /// Reads the specified integer and converts it into the target managed object.
@@ -31,23 +31,11 @@ public abstract class Int32Base<T> : HandleDataConverterBase<T>
 /// <summary>
 /// Reads an Int32 from the clipboard.
 /// </summary>
-public class Int32DataConverter : Int32Base<int>
+public class Int32DataConverter : Int32DataConverterBase<int>
 {
     /// <inheritdoc/>
     public override int ReadFromInt32(int val) => val;
 
     /// <inheritdoc/>
     public override int WriteToInt32(int obj) => obj;
-}
-
-/// <summary>
-/// Used by CF_LOCALE, which is stored as an integer (lcid) and is represented by <see cref="CultureInfo"/>.
-/// </summary>
-public class Locale : Int32Base<CultureInfo>
-{
-    /// <inheritdoc/>
-    public override CultureInfo ReadFromInt32(int val) => new CultureInfo(val);
-
-    /// <inheritdoc/>
-    public override int WriteToInt32(CultureInfo obj) => obj.LCID;
 }

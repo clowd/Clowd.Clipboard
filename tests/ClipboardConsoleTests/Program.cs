@@ -47,7 +47,7 @@ namespace ConsoleTests
 
                         try
                         {
-                            var test = handle.GetFormatType(f, new TextUtf8());
+                            var test = handle.GetFormatType(f, new TextUtf8Converter());
 
                             if (test != null && test.Length > 200)
                                 test = test.Substring(0, 200);

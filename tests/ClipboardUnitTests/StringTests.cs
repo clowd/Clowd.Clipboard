@@ -127,7 +127,7 @@ namespace ClipboardGapWpf.Tests
         [TestMethod]
         public void ANSI_Encode()
         {
-            var converter = new Clowd.Clipboard.Formats.TextAnsi();
+            var converter = new Clowd.Clipboard.Formats.TextAnsiConverter();
             var hglobal = converter.WriteToHGlobal(_text);
             var back = converter.ReadFromHGlobal(hglobal);
             var ansi = Encoding.GetEncoding(System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ANSICodePage);
@@ -138,7 +138,7 @@ namespace ClipboardGapWpf.Tests
         [TestMethod]
         public void UTF16_Encode()
         {
-            var converter = new Clowd.Clipboard.Formats.TextUnicode();
+            var converter = new Clowd.Clipboard.Formats.TextUnicodeConverter();
             var hglobal = converter.WriteToHGlobal(_text);
             var back = converter.ReadFromHGlobal(hglobal);
             var enc = Encoding.Unicode;
@@ -149,7 +149,7 @@ namespace ClipboardGapWpf.Tests
         [TestMethod]
         public void UTF8_Encode()
         {
-            var converter = new Clowd.Clipboard.Formats.TextUtf8();
+            var converter = new Clowd.Clipboard.Formats.TextUtf8Converter();
             var hglobal = converter.WriteToHGlobal(_text);
             var back = converter.ReadFromHGlobal(hglobal);
             var enc = Encoding.UTF8;

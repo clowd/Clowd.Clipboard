@@ -7,7 +7,7 @@ namespace Clowd.Clipboard.Formats;
 /// Converts a CF_DIB to/from a WPF BitmapSource.
 /// </summary>
 [SupportedOSPlatform("windows")]
-public unsafe class ImageGdiDib : BytesDataConverterBase<Bitmap>
+public unsafe class DibToGdiBitmapConverter : BytesDataConverterBase<Bitmap>
 {
     /// <inheritdoc/>
     public override Bitmap ReadFromBytes(byte[] data)
@@ -26,7 +26,7 @@ public unsafe class ImageGdiDib : BytesDataConverterBase<Bitmap>
 /// Converts a CF_DIBV5 to/from a WPF BitmapSource.
 /// </summary>
 [SupportedOSPlatform("windows")]
-public unsafe class ImageGdiDibV5 : ImageGdiDib
+public unsafe class DibV5ToBitmap : DibToGdiBitmapConverter
 {
     /// <inheritdoc/>
     public override byte[] WriteToBytes(Bitmap obj)

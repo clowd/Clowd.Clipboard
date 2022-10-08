@@ -18,25 +18,25 @@ public class ClipboardGdi : ClipboardStaticBase<ClipboardHandleGdi, Bitmap>
 public abstract class ClipboardHandleGdiBase : ClipboardHandlePlatformBase<Bitmap>
 {
     /// <inheritdoc/>
-    protected override IDataConverter<Bitmap> GetDibConverter() => new ImageGdiDib();
+    protected override IDataConverter<Bitmap> GetDibConverter() => new DibToGdiBitmapConverter();
 
     /// <inheritdoc/>
-    protected override IDataConverter<Bitmap> GetDibV5Converter() => new ImageGdiDibV5();
+    protected override IDataConverter<Bitmap> GetDibV5Converter() => new DibV5ToBitmap();
 
     /// <inheritdoc/>
-    protected override IDataConverter<Bitmap> GetGdiHandleConverter() => new ImageGdiHandle();
+    protected override IDataConverter<Bitmap> GetGdiHandleConverter() => new GdiHandleToGdiBitmapConverter();
 
     /// <inheritdoc/>
-    protected override IDataConverter<Bitmap> GetGifConverter() => new ImageGdiBitmap(ImageFormat.Gif);
+    protected override IDataConverter<Bitmap> GetGifConverter() => new BytesToGdiBitmapConverter(ImageFormat.Gif);
 
     /// <inheritdoc/>
-    protected override IDataConverter<Bitmap> GetJpegConverter() => new ImageGdiBitmap(ImageFormat.Jpeg);
+    protected override IDataConverter<Bitmap> GetJpegConverter() => new BytesToGdiBitmapConverter(ImageFormat.Jpeg);
 
     /// <inheritdoc/>
-    protected override IDataConverter<Bitmap> GetPngConverter() => new ImageGdiBitmap(ImageFormat.Png);
+    protected override IDataConverter<Bitmap> GetPngConverter() => new BytesToGdiBitmapConverter(ImageFormat.Png);
 
     /// <inheritdoc/>
-    protected override IDataConverter<Bitmap> GetTiffConverter() => new ImageGdiBitmap(ImageFormat.Tiff);
+    protected override IDataConverter<Bitmap> GetTiffConverter() => new BytesToGdiBitmapConverter(ImageFormat.Tiff);
 
     /// <inheritdoc/>
     protected override Bitmap LoadFromFile(string filePath) => Image.FromFile(filePath) as Bitmap;

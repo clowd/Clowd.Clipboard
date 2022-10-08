@@ -32,23 +32,23 @@ public class ClipboardHandleWpf : ClipboardHandlePlatformBase<BitmapSource>, ICl
     }
 
     /// <inheritdoc/>
-    protected override IDataConverter<BitmapSource> GetJpegConverter() => new ImageWpfBasicEncoderJpeg();
+    protected override IDataConverter<BitmapSource> GetJpegConverter() => new BytesToWicBitmapConverter(BytesToWicBitmapConverter.Format_Jpeg);
 
     /// <inheritdoc/>
-    protected override IDataConverter<BitmapSource> GetTiffConverter() => new ImageWpfBasicEncoderTiff();
+    protected override IDataConverter<BitmapSource> GetTiffConverter() => new BytesToWicBitmapConverter(BytesToWicBitmapConverter.Format_Tiff);
 
     /// <inheritdoc/>
-    protected override IDataConverter<BitmapSource> GetGifConverter() => new ImageWpfBasicEncoderGif();
+    protected override IDataConverter<BitmapSource> GetGifConverter() => new BytesToWicBitmapConverter(BytesToWicBitmapConverter.Format_Gif);
 
     /// <inheritdoc/>
-    protected override IDataConverter<BitmapSource> GetPngConverter() => new ImageWpfBasicEncoderPng();
+    protected override IDataConverter<BitmapSource> GetPngConverter() => new BytesToWicBitmapConverter(BytesToWicBitmapConverter.Format_Png);
 
     /// <inheritdoc/>
-    protected override IDataConverter<BitmapSource> GetGdiHandleConverter() => new ImageBitmap();
+    protected override IDataConverter<BitmapSource> GetGdiHandleConverter() => new GdiHandleToWicBitmapConverter();
 
     /// <inheritdoc/>
-    protected override IDataConverter<BitmapSource> GetDibConverter() => new ImageWpfDib();
+    protected override IDataConverter<BitmapSource> GetDibConverter() => new DibToWicBitmapConverter();
 
     /// <inheritdoc/>
-    protected override IDataConverter<BitmapSource> GetDibV5Converter() => new ImageWpfDibV5();
+    protected override IDataConverter<BitmapSource> GetDibV5Converter() => new DibV5ToBitmapSource();
 }

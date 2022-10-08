@@ -5,7 +5,7 @@ namespace Clowd.Clipboard.Formats;
 /// <summary>
 /// A base class for encoding strings for the clipboard.
 /// </summary>
-public abstract class TextBasicEncoder : BytesDataConverterBase<string>
+public abstract class TextEncodingConverterBase : BytesDataConverterBase<string>
 {
     /// <summary>
     /// Gets the encoder used to convert a string to bytes and back.
@@ -15,7 +15,7 @@ public abstract class TextBasicEncoder : BytesDataConverterBase<string>
     /// <summary>
     /// Read a string from the specified bytes
     /// </summary>
-    public override string ReadFromBytes(byte[] data) 
+    public override string ReadFromBytes(byte[] data)
         => GetEncoding().GetString(data).TrimEnd('\0');
 
     /// <summary>
@@ -29,7 +29,7 @@ public abstract class TextBasicEncoder : BytesDataConverterBase<string>
 /// <summary>
 /// For ANSI/MultiByte encoded strings.
 /// </summary>
-public class TextAnsi : TextBasicEncoder
+public class TextAnsiConverter : TextEncodingConverterBase
 {
     /// <inheritdoc/>
     public override Encoding GetEncoding() => Encoding.GetEncoding(Thread.CurrentThread.CurrentCulture.TextInfo.ANSICodePage);
@@ -38,7 +38,7 @@ public class TextAnsi : TextBasicEncoder
 /// <summary>
 /// For widechar encoded strings.
 /// </summary>
-public class TextUnicode : TextBasicEncoder
+public class TextUnicodeConverter : TextEncodingConverterBase
 {
     /// <inheritdoc/>
     public override Encoding GetEncoding() => Encoding.Unicode;
@@ -47,7 +47,7 @@ public class TextUnicode : TextBasicEncoder
 /// <summary>
 /// For UTF-8 encoded strings.
 /// </summary>
-public class TextUtf8 : TextBasicEncoder
+public class TextUtf8Converter : TextEncodingConverterBase
 {
     /// <inheritdoc/>
     public override Encoding GetEncoding() => Encoding.UTF8;
