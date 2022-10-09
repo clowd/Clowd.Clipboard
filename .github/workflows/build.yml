@@ -1,0 +1,32 @@
+name: Build
+
+on: [ push, pull_request ]
+
+env:
+  DOTNET_VERSION: '6.0.301'
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Build
+        run: dotnet build -c Release
+      #- name: Test
+      #  run: dotnet test --no-build test\Squirrel.Tests\Squirrel.Tests.csproj -c Release -l "console;verbosity=detailed"
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages
+          path: .\build\Release\*.nupkg
+      - name: Publish to GitHub Packages
+        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
+        run: echo yes
+        #run: dotnet nuget push .\build\Release\*.nupkg -k ${{ secrets.NUGET_TOKEN }} --skip-duplicate
