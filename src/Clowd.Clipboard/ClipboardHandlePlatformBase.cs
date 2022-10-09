@@ -163,7 +163,7 @@ public abstract class ClipboardHandlePlatformBase<TBitmap> : ClipboardHandle
         }
 
         // now we search "other" formats (like JPEG)
-        foreach (var f in _prioritisedFormats)
+        foreach (var f in _otherFormats)
             if (formats.Contains(f))
                 if (TryGetFormatObject(f.Id, f.TypeObjectReader, out var bitmap))
                     return bitmap;
