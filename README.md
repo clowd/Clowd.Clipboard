@@ -1,7 +1,7 @@
 
 
 # Clowd.Clipboard
-This library is a light-weight clipboard replacement library for dotnet. It is not tightly coupled to a UI framework, and it contains a custom bitmap parser to help deal with some of the inconsistencies which are present in clipboard images.
+This library is a light-weight clipboard replacement library for dotnet. It is not tightly coupled to a UI framework, and it contains a [custom bitmap parser](#clowdclipboardbitmaps) to help deal with some of the inconsistencies which are present in clipboard images.
 
 Join us on Discord: [![Discord](https://img.shields.io/discord/767856501477343282?style=flat-square&color=purple)](https://discord.gg/M6he8ZPAAJ)
 
@@ -19,17 +19,6 @@ Join us on Discord: [![Discord](https://img.shields.io/discord/76785650147734328
 ## Clipboard Examples
 
 Below are several examples of how to do clipboard operations.
-
-### Reading list of current clipboard formats
-
-```cs
-using (var handle = await ClipboardWpf.OpenAsync());
-{
-    Console.WriteLine("Formats currently on the clipboard: ");
-    foreach (var f in handle.GetPresentFormats())
-        Console.WriteLine(" - " + f.Name);
-}
-```
 
 
 
@@ -69,6 +58,19 @@ using (var handle = await ClipboardWpf.OpenAsync());
     {
         clipImage = handle.GetImage();
     }
+}
+```
+
+
+
+### Reading list of currently available clipboard formats
+
+```cs
+using (var handle = await ClipboardWpf.OpenAsync());
+{
+    Console.WriteLine("Formats currently on the clipboard: ");
+    foreach (var f in handle.GetPresentFormats())
+        Console.WriteLine(" - " + f.Name);
 }
 ```
 
