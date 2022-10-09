@@ -7,7 +7,7 @@ Join us on Discord: [![Discord](https://img.shields.io/discord/76785650147734328
 
 
 
-| **Package**                                                  | **Nuget Link**                                               | **Notes**                                                    |
+| **Package**                                                  | **Nuget**                                                    | **Notes**                                                    |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | [Clowd.Clipboard](https://www.nuget.org/packages/Clowd.Clipboard) | [![Nuget](https://img.shields.io/nuget/v/Clowd.Clipboard?style=flat-square)](https://www.nuget.org/packages/Clowd.Clipboard/) | Core library containing basic clipboard functionality. No image/bitmap support. |
 | [Clowd.Clipboard.Gdi](https://www.nuget.org/packages/Clowd.Clipboard.Gdi) | [![Nuget](https://img.shields.io/nuget/v/Clowd.Clipboard.Gdi?style=flat-square)](https://www.nuget.org/packages/Clowd.Clipboard.Gdi/) | Adds `ClipboardGdi`, images using `System.Drawing.Bitmap`.   |
@@ -20,7 +20,7 @@ Join us on Discord: [![Discord](https://img.shields.io/discord/76785650147734328
 
 Below are several examples of how to do clipboard operations.
 
-#### Reading list of current clipboard formats
+### Reading list of current clipboard formats
 
 ```cs
 using (var handle = await ClipboardWpf.OpenAsync());
@@ -33,7 +33,7 @@ using (var handle = await ClipboardWpf.OpenAsync());
 
 
 
-#### Getting or setting simple types (single operation)
+### Getting or setting simple types (single operation)
 
 The static helper (eg. `ClipboardWpf` or `ClipboardGdi`) has methods for simple things. This takes care of opening the clipboard, reading the data, and then disposing the handle.
 
@@ -50,7 +50,7 @@ ClipboardWpf.SetImage(clipboardImg);
 
 
 
-#### Getting or setting complex types (multi operation)
+### Getting or setting complex types (multi operation)
 
 You should not use the static helper methods if you need to perform several clipboard operations. If you need to read or set multiple formats at once, or check for what formats are available, you should instead open a clipboard handle and dispose it when you're done.
 
@@ -74,7 +74,7 @@ using (var handle = await ClipboardWpf.OpenAsync());
 
 
 
-#### Using custom clipboard formats
+### Using custom clipboard formats
 
 Using a custom/application specific format is very easy with this library. You should first register your format somewhere statically in your application.
 
