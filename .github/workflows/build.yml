@@ -26,7 +26,7 @@ jobs:
         with:
           name: packages
           path: .\build\Release\*.nupkg
-      - name: Publish to GitHub Packages
+      - name: Publish to NuGet
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
         run: echo yes
         #run: dotnet nuget push .\build\Release\*.nupkg -k ${{ secrets.NUGET_TOKEN }} --skip-duplicate
