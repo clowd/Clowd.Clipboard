@@ -1,3 +1,5 @@
+#pragma warning disable CA1416 // Validate platform compatibility
+
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
