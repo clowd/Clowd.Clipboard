@@ -121,11 +121,11 @@ public abstract class ClipboardHandlePlatformBase<TBitmap> : ClipboardHandle
     protected virtual void SetImageImpl(TBitmap bitmap)
     {
         var pngFormat = _allImageFormats.FirstOrDefault(f => f == ClipboardFormat.Png);
-        if (pngFormat != null)
+        if (pngFormat?.TypeObjectReader != null)
             SetFormat(pngFormat, bitmap);
 
-        var dibFormat = _allImageFormats.FirstOrDefault(f => f == ClipboardFormat.DibV5);
-        if (dibFormat != null)
+        var dibFormat = _allImageFormats.FirstOrDefault(f => f == ClipboardFormat.Dib);
+        if (dibFormat?.TypeObjectReader != null)
             SetFormat(dibFormat, bitmap);
     }
 
@@ -150,7 +150,7 @@ public abstract class ClipboardHandlePlatformBase<TBitmap> : ClipboardHandle
         foreach (var fmt in formats)
         {
             var orderedFormat = _clipboardOrderFormats.FirstOrDefault(f => f == fmt);
-            if (orderedFormat != null)
+            if (orderedFormat?.TypeObjectReader != null)
             {
                 if (TryGetFormatObject(orderedFormat.Id, orderedFormat.TypeObjectReader, out var dib))
                 {

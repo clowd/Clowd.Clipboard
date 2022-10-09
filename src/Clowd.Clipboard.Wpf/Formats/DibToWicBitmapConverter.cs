@@ -1,4 +1,6 @@
-﻿using System.Windows.Media.Imaging;
+﻿using System.Runtime.InteropServices;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using Clowd.Clipboard.Bitmaps;
 
 namespace Clowd.Clipboard.Formats;
@@ -20,9 +22,43 @@ public unsafe class DibToWicBitmapConverter : BytesDataConverterBase<BitmapSourc
     }
 
     /// <inheritdoc/>
-    public override byte[] WriteToBytes(BitmapSource obj)
+    public override byte[] WriteToBytes(BitmapSource bmp)
     {
-        return BitmapWpfInternal.GetBytes(obj, BitmapCore.BC_WRITE_SKIP_FH | BitmapCore.BC_WRITE_VINFO);
+        // use WIC because the integrated method is less flexible.
+        // for example, it can't output pre-multiplied alpha which seems to produce better results.
+        //return BitmapWpfInternal.GetBytes(obj, BitmapCore.BC_WRITE_SKIP_FH | BitmapCore.BC_WRITE_VINFO);
+
+        FormatConvertedBitmap formatted = new FormatConvertedBitmap(bmp, PixelFormats.Pbgra32, null, 0);
+        int imgHeight = formatted.PixelHeight;
+        int imgWidth = formatted.PixelWidth;
+        int imgStride = imgWidth * 4;
+        int imgSize = imgStride * imgHeight;
+        var imgBytes = new byte[imgSize];
+        formatted.CopyPixels(imgBytes, imgStride, 0);
+
+        BITMAPINFOHEADER info = new BITMAPINFOHEADER()
+        {
+            bV5Size = 40,
+            bV5BitCount = 32,
+            bV5Compression = BitmapCompressionMode.BI_RGB,
+            bV5Height = imgHeight,
+            bV5Width = imgWidth,
+            bV5Planes = 1,
+            bV5SizeImage = (uint)imgSize,
+        };
+
+        var headerSize = Marshal.SizeOf<BITMAPINFOHEADER>();
+        byte[] buf = new byte[headerSize + imgSize];
+        uint offset = 0;
+        StructUtil.SerializeTo(info, buf, ref offset);
+
+        // the bitmap is upside down, so we need to reverse it.
+        for (int y = 0; y < imgHeight; y++)
+        {
+            Buffer.BlockCopy(imgBytes, (imgHeight - y - 1) * imgStride, buf, headerSize + (y * imgStride), imgStride);
+        }
+
+        return buf;
     }
 }
 
