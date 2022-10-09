@@ -14,6 +14,9 @@ public class ClipboardFormat : IEquatable<ClipboardFormat>
 {
     // this is a good reference for formats
     // https://www.codeproject.com/Reference/1091137/Windows-Clipboard-Formats
+    // https://chromium.googlesource.com/chromium/src/+/master/ui/base/clipboard/clipboard_win.cc
+    // https://github.com/chromium/chromium/blob/master/ui/base/clipboard/clipboard_format_type_win.cc
+    // https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/platform-apis/aa359736(v=vs.85)
 
     /// <summary>
     /// The list of clipboard formats currently known to this process.
