@@ -98,8 +98,7 @@ Once your clipboard format is registered, you can use it the same way as any bui
 // set custom data to clipboard
 using (var handle = await ClipboardWpf.OpenAsync())
 {
-    handle.Open();
-
+    // it is possible to set multiple items to the clipboard.
     handle.SetFormat(myCustomTextFormat, "My Custom Text");
     handle.SetFormat(myCustomBinaryFormat, new byte[0]);
 
@@ -110,9 +109,12 @@ using (var handle = await ClipboardWpf.OpenAsync())
 // later, read custom data from clipboard
 using (var handle = await ClipboardWpf.OpenAsync())
 {
-    if (handle.ContainsFormat(myCustomBinaryFormat)) 
+    if (handle.ContainsFormat(myCustomTextFormat)) 
     {
         string myCustomText = handle.GetFormatType(myCustomTextFormat);
+    }
+    if (handle.ContainsFormat(myCustomBinaryFormat)) 
+    {
     	byte[] myCustomBytes = handle.GetFormatBytes(myCustomBinaryFormat);  
     }
 }
