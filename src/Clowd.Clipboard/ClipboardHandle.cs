@@ -37,6 +37,7 @@ namespace Clowd.Clipboard
                 if (--i == 0) ThrowOpenFailed();
                 Thread.Sleep(RETRY_DELAY);
             }
+
             _isOpen = true;
         }
 
@@ -53,6 +54,7 @@ namespace Clowd.Clipboard
                 if (--i == 0) ThrowOpenFailed();
                 await Task.Delay(RETRY_DELAY).ConfigureAwait(false);
             }
+
             _isOpen = true;
         }
 
@@ -393,30 +395,27 @@ namespace Clowd.Clipboard
             var hr = Marshal.GetLastWin32Error();
             var mex = Marshal.GetExceptionForHR(hr);
 
-            if (hr == 5)  // ACCESS DENIED
+            try
             {
-                IntPtr hwnd = NativeMethods.GetOpenClipboardWindow();
-                if (hwnd != IntPtr.Zero)
+                if (hr == 5) // ACCESS DENIED
                 {
-                    uint threadId = NativeMethods.GetWindowThreadProcessId(hwnd, out var processId);
-                    string processName = "Unknown";
-                    try
+                    IntPtr hwnd = NativeMethods.GetOpenClipboardWindow();
+                    if (hwnd != IntPtr.Zero)
                     {
+                        uint threadId = NativeMethods.GetWindowThreadProcessId(hwnd, out var processId);
+                        string processName = "Unknown";
                         var p = Process.GetProcessById((int)processId);
                         processName = p.ProcessName;
+                        throw new ClipboardBusyException((int)processId, processName, mex);
                     }
-                    catch { }
-
-                    throw new ClipboardBusyException((int)processId, processName, mex);
-
-                }
-                else
-                {
-                    throw new ClipboardBusyException(mex);
                 }
             }
+            catch
+            {
+                // if we can't get the process name locking clipboard, just throw the original exception
+            }
 
-            throw mex;
+            throw new ClipboardBusyException(mex);
         }
     }
 }
