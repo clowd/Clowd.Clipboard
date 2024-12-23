@@ -10,9 +10,9 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Setup dotnet
@@ -25,10 +25,10 @@ jobs:
       - name: Build
         run: dotnet build -c Release
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: packages
-          path: .\build\Release\*.nupkg
+          path: ./build/Release/*.nupkg
       - name: Publish to NuGet
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
-        run: dotnet nuget push .\build\Release\*.nupkg -k ${{ secrets.NUGET_TOKEN }} -s https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push ./build/Release/*.nupkg -k ${{ secrets.NUGET_TOKEN }} -s https://api.nuget.org/v3/index.json --skip-duplicate
