@@ -31,6 +31,12 @@ public abstract class TextEncodingConverterBase : BytesDataConverterBase<string>
 /// </summary>
 public class TextAnsiConverter : TextEncodingConverterBase
 {
+    static TextAnsiConverter()
+    {
+        // .net core doesn't have ansi codepages available by default
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+    }
+    
     /// <inheritdoc/>
     public override Encoding GetEncoding() => Encoding.GetEncoding(Thread.CurrentThread.CurrentCulture.TextInfo.ANSICodePage);
 }
