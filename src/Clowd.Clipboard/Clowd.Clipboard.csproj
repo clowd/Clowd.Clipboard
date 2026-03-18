@@ -6,7 +6,11 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   
-  <ItemGroup>
+  <ItemGroup Condition=" $([System.String]::Copy('$(TargetFramework)').StartsWith('net6.0')) ">
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" ! $([System.String]::Copy('$(TargetFramework)').StartsWith('net6.0')) ">
     <PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.0" />
   </ItemGroup>
 
