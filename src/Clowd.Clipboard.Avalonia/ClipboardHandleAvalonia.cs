@@ -47,7 +47,7 @@ public class ClipboardHandleAvalonia : ClipboardHandleGdiBase, IClipboardHandleP
     public virtual void SetImage(AvaBitmap bitmap)
     {
         using var ms = new MemoryStream();
-        bitmap.Save(ms);
+        bitmap.Save(ms, Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
 
         using var gdi = new Bitmap(ms);
 
