@@ -19,11 +19,13 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
-            6.0.x
             8.0.x
             9.0.x
+            10.0.x
       - name: Build
         run: dotnet build -c Release
+      - name: Verify package compatibility
+        run: bash tests/PackageCompatibility/verify-packages.sh
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
